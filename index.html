@@ -189,6 +189,14 @@
   .toggle input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
   .ghost { border: 1px solid var(--line-strong); background: transparent; border-radius: 10px; padding: 8px 12px; font-size: 14px; font-weight: 600; color: var(--accent); }
   .ledger tr.now td { color: var(--accent); font-weight: 700; }
+  .tset { display: grid; gap: 10px; }
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 12px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; padding: 8px 4px; border-radius: 9px; }
+  .seg button.on { background: var(--accent); color: var(--accent-ink); }
+  .seg.ratios button { display: grid; gap: 1px; padding: 6px 2px; }
+  .seg.ratios small { font-size: 11px; font-weight: 500; opacity: 0.8; }
+  #tSettings[data-growth="add"] .only-mul,
+  #tSettings[data-growth="mul"] .only-add { display: none; }
 
   @media (max-width: 380px) {
     h1 { font-size: 18px; }
@@ -266,8 +274,9 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="tSettings" data-growth="add">
       <h2>블라인드 설정</h2>
+      <div class="tset">
       <div class="settings">
         <div class="field">
           <label for="tSb">시작 스몰</label>
@@ -277,6 +286,15 @@
           <label for="tBb">시작 빅</label>
           <div class="unit"><input id="tBb" type="number" inputmode="numeric" min="0" placeholder="10"><span>칩</span></div>
         </div>
+      </div>
+      <div class="field">
+        <label>증가 방식</label>
+        <div class="seg" id="tGrowth">
+          <button type="button" data-growth="add">＋ 같은 값 더하기</button>
+          <button type="button" data-growth="mul">× 배수로 올리기</button>
+        </div>
+      </div>
+      <div class="settings only-add">
         <div class="field">
           <label for="tSbInc">스몰 증가값</label>
           <div class="unit"><input id="tSbInc" type="number" inputmode="numeric" min="0" placeholder="5"><span>칩</span></div>
@@ -285,6 +303,17 @@
           <label for="tBbInc">빅 증가값</label>
           <div class="unit"><input id="tBbInc" type="number" inputmode="numeric" min="0" placeholder="10"><span>칩</span></div>
         </div>
+      </div>
+      <div class="field only-mul">
+        <label>레벨마다 몇 배로</label>
+        <div class="seg ratios" id="tRatio">
+          <button type="button" data-ratio="1.25"><b>×1.25</b><small>느리게</small></button>
+          <button type="button" data-ratio="1.33"><b>×1.33</b><small>보통</small></button>
+          <button type="button" data-ratio="1.5"><b>×1.5</b><small>빠르게</small></button>
+          <button type="button" data-ratio="2"><b>×2</b><small>터보</small></button>
+        </div>
+      </div>
+      <div class="settings">
         <div class="field">
           <label for="tMin">블라인드 업 간격</label>
           <div class="unit"><input id="tMin" type="number" inputmode="decimal" min="0" step="any" placeholder="15"><span>분</span></div>
@@ -293,6 +322,7 @@
           <label for="tWarn">미리 알림 (0이면 끔)</label>
           <div class="unit wide"><input id="tWarn" type="number" inputmode="numeric" min="0" placeholder="30"><span>초 전</span></div>
         </div>
+      </div>
       </div>
       <p class="hint" id="tHint"></p>
       <div class="opts">
@@ -724,7 +754,7 @@
 
   function freshTour() {
     return {
-      sb: 5, bb: 10, sbInc: 5, bbInc: 10, minutes: 15, warnSec: 30, voice: true,
+      sb: 5, bb: 10, growth: 'add', sbInc: 5, bbInc: 10, ratio: 1.33, minutes: 15, warnSec: 30, voice: true,
       level: 0, status: 'idle', endsAt: 0, left: 0, warned: false,
     };
   }
@@ -740,8 +770,58 @@
   }
 
   const durMs = () => tour.minutes * 60000;
-  const sbAt = l => tour.sb + l * tour.sbInc;
-  const bbAt = l => tour.bb + l * tour.bbInc;
+  const sbAt = l => tour.growth === 'mul' ? ladder(l)[0] : tour.sb + l * tour.sbInc;
+  const bbAt = l => tour.growth === 'mul' ? ladder(l)[1] : tour.bb + l * tour.bbInc;
+
+  // ----- 배수 모드 -----
+  // 실제 대회 구조표처럼 레벨마다 약 ratio배씩 올리되 25·50·75·100·125·150·200… 같은 깔끔한 값으로 맞춤
+  // 칩 단위(시작 스몰·빅의 최대공약수)로 나눠떨어지는 값만 쓰고, 빅은 시작 때의 스몰:빅 비율을 유지
+  // (1:2처럼 정수배면 그대로, 10/25처럼 아니면 빅도 깔끔한 값으로)
+
+  const NICE = [100, 120, 125, 150, 200, 250, 300, 400, 500, 600, 750, 800]; // 가수 ×100
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+
+  // min보다 큰 깔끔한 값 중 target에 비율로 가장 가까운 값
+  function niceAbove(target, min, u) {
+    let best = 0, bestErr = Infinity;
+    const lo = Math.max(0, Math.floor(Math.log10(Math.max(min, 1))));
+    const hi = Math.min(Math.floor(Math.log10(Math.max(target, 1))) + 1, 15);
+    for (let e = lo; e <= hi; e++) {
+      for (const n of NICE) {
+        let v = n * 10 ** e;
+        if (v % 100) continue;
+        v /= 100;
+        if (v <= min || v % u) continue;
+        const err = Math.abs(Math.log(v / target));
+        if (err < bestErr) { best = v; bestErr = err; }
+      }
+    }
+    return best || Math.max(min + u, Math.round(target / u) * u);
+  }
+
+  let ladderKey = '', ladderSb = [], ladderBb = [];
+  function ladder(l) {
+    const key = `${tour.sb}/${tour.bb}/${tour.ratio}`;
+    if (key !== ladderKey) {
+      ladderKey = key;
+      ladderSb = [tour.sb];
+      ladderBb = [tour.bb];
+    }
+    const u = gcd(tour.sb, tour.bb) || 1;
+    const k = tour.bb / tour.sb;
+    while (ladderSb.length <= l) {
+      const i = ladderSb.length;
+      if (tour.sb > 0) {
+        const sb = niceAbove(ladderSb[i - 1] * tour.ratio, ladderSb[i - 1], u);
+        ladderSb.push(sb);
+        ladderBb.push(Number.isInteger(k) ? sb * k : niceAbove(sb * k, sb, u));
+      } else {
+        ladderSb.push(0);
+        ladderBb.push(niceAbove(ladderBb[i - 1] * tour.ratio, ladderBb[i - 1], u));
+      }
+    }
+    return [ladderSb[l], ladderBb[l]];
+  }
   const tourOk = () => tour.bb > 0 && tour.minutes > 0;
   const warnOn = () => tour.warnSec > 0 && tour.warnSec * 1000 < durMs();
   const pad = n => String(n).padStart(2, '0');
@@ -910,6 +990,13 @@
     $('#tMin').value = tour.minutes || '';
     $('#tWarn').value = tour.warnSec;
     $('#tVoice').checked = tour.voice;
+    renderGrowth();
+  }
+
+  function renderGrowth() {
+    $('#tSettings').dataset.growth = tour.growth;
+    document.querySelectorAll('#tGrowth button').forEach(b => b.classList.toggle('on', b.dataset.growth === tour.growth));
+    document.querySelectorAll('#tRatio button').forEach(b => b.classList.toggle('on', Number(b.dataset.ratio) === tour.ratio));
   }
 
   function renderTour() {
@@ -943,7 +1030,7 @@
       rows += `<tr${now ? ' class="now"' : ''}><td>${l + 1}${now ? ' · 지금' : ''}</td><td>${fmt(sbAt(l))}</td><td>${fmt(bbAt(l))}</td></tr>`;
     }
     $('#tStruct tbody').innerHTML = rows;
-    $('#tStructNote').textContent = tour.minutes > 0 ? `${tour.minutes}분마다` : '';
+    $('#tStructNote').textContent = (tour.growth === 'mul' ? `×${tour.ratio} · ` : '') + (tour.minutes > 0 ? `${tour.minutes}분마다` : '');
   }
 
   function renderTourHint() {
@@ -951,7 +1038,9 @@
     if (!tourOk()) {
       h = '빅 블라인드와 블라인드 업 간격을 입력해 주세요';
     } else {
-      h = `${tour.minutes}분마다 스몰 +${fmt(tour.sbInc)}, 빅 +${fmt(tour.bbInc)}씩 올라가요.`;
+      h = tour.growth === 'mul'
+        ? `${tour.minutes}분마다 약 ${Math.round((tour.ratio - 1) * 100)}%씩 올라가요. 실제 대회처럼 깔끔한 값으로 맞춰요.`
+        : `${tour.minutes}분마다 스몰 +${fmt(tour.sbInc)}, 빅 +${fmt(tour.bbInc)}씩 올라가요.`;
       if (!tour.warnSec) h += ' 미리 알림은 꺼져 있어요.';
       else if (!warnOn()) h += ' 미리 알림 시간이 간격보다 길어서 울리지 않아요.';
       else h += ` ${secText(tour.warnSec)} 전에 미리 알려줘요.`;
@@ -971,6 +1060,22 @@
     });
   });
   $('#tVoice').addEventListener('change', e => { tour.voice = e.target.checked; saveTour(); });
+  $('#tGrowth').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    tour.growth = b.dataset.growth;
+    saveTour();
+    renderGrowth();
+    renderTour();
+  });
+  $('#tRatio').addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    tour.ratio = Number(b.dataset.ratio);
+    saveTour();
+    renderGrowth();
+    renderTour();
+  });
 
   $('#tToggle').addEventListener('click', toggleTimer);
   $('#tPrev').addEventListener('click', () => jump(-1));
