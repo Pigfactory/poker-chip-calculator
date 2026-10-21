@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>포커 칩 계산기</title>
+<meta name="description" content="바이인 기록하고 남은 칩으로 누가 누구에게 얼마 줄지 정산">
+<meta name="theme-color" content="#1f7a52">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%231f7a52'/%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%23fff' stroke-width='3' stroke-dasharray='5 4'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f2f4f1;
+    --surface: #ffffff;
+    --surface-2: #eef1ed;
+    --text: #17201b;
+    --muted: #5f6b64;
+    --line: #e1e6e2;
+    --line-strong: #c4ccc6;
+    --accent: #1f7a52;
+    --accent-ink: #ffffff;
+    --plus: #1a7f4e;
+    --plus-bg: #e2f3e9;
+    --minus: #c2410c;
+    --minus-bg: #fbe9df;
+    --warn-bg: #fff6df;
+    --warn-line: #efc66e;
+    --warn-text: #6e4600;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #0d1411;
+      --surface: #151f1a;
+      --surface-2: #1c2822;
+      --text: #e7eee9;
+      --muted: #93a39a;
+      --line: #25332c;
+      --line-strong: #3a4a42;
+      --accent: #36b47b;
+      --accent-ink: #04140c;
+      --plus: #4fd08f;
+      --plus-bg: #163626;
+      --minus: #ff8a4c;
+      --minus-bg: #3a2216;
+      --warn-bg: #2b2310;
+      --warn-line: #6b5419;
+      --warn-text: #f3cd78;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .wrap { max-width: 560px; margin: 0 auto; padding: 16px 16px calc(104px + env(safe-area-inset-bottom)); }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 14px; }
+  h1 { font-size: 21px; margin: 0; letter-spacing: -0.02em; white-space: nowrap; }
+  .steps { display: flex; gap: 4px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+  .steps button { border: 0; background: transparent; color: var(--muted); font-size: 13px; padding: 5px 11px; border-radius: 999px; white-space: nowrap; }
+  .steps button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .card h2 { font-size: 15px; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card h2 small { font-weight: 500; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .card h3 { font-size: 14px; margin: 18px 0 8px; color: var(--muted); font-weight: 600; }
+
+  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .unit { position: relative; }
+  .unit span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
+  .unit input { padding-right: 34px; }
+  .field input, .p-name, .p-count, .p-chips {
+    width: 100%; background: var(--surface-2); border: 1px solid transparent; border-radius: 10px;
+    padding: 10px 12px; outline: none; font-variant-numeric: tabular-nums;
+  }
+  input:focus { border-color: var(--accent); background: var(--surface); }
+  .hint { font-size: 13px; color: var(--muted); margin: 10px 2px 0; }
+
+  .players { list-style: none; margin: 0; padding: 0; }
+  .player { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .player:first-child { border-top: 0; padding-top: 0; }
+  .p-main { flex: 1; min-width: 0; }
+  .p-name { padding: 8px 10px; font-weight: 600; }
+  .p-label { font-weight: 600; padding: 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .p-sub { font-size: 12px; color: var(--muted); margin: 3px 2px 0; font-variant-numeric: tabular-nums; }
+
+  .stepper { display: flex; align-items: center; gap: 4px; flex: none; }
+  .step { width: 40px; height: 40px; border-radius: 10px; border: 0; font-size: 22px; font-weight: 600; line-height: 1; display: grid; place-items: center; touch-action: manipulation; }
+  .step.minus { background: var(--minus-bg); color: var(--minus); }
+  .step.plus { background: var(--plus-bg); color: var(--plus); }
+  .step:active { transform: scale(0.93); }
+  .p-count { width: 46px; text-align: center; padding: 8px 2px; font-weight: 700; }
+  .del { width: 28px; height: 40px; border: 0; background: transparent; color: var(--muted); font-size: 20px; border-radius: 8px; flex: none; padding: 0; }
+
+  .chip-field { flex: none; width: 128px; }
+  .p-chips { text-align: right; font-weight: 700; }
+
+  .add { width: 100%; margin-top: 12px; padding: 12px; border-radius: 12px; border: 1.5px dashed var(--line-strong); background: transparent; color: var(--accent); font-weight: 600; }
+
+  .check { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+  .check b { font-variant-numeric: tabular-nums; }
+  .badge { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+  .badge.ok { background: var(--plus-bg); color: var(--plus); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn-text); }
+
+  .empty { color: var(--muted); font-size: 14px; margin: 0; }
+  .notice { background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-text); border-radius: 12px; padding: 12px 14px; font-size: 14px; margin-bottom: 14px; }
+  .notice b { display: block; margin-bottom: 4px; }
+  .notice p { margin: 4px 0 0; }
+
+  .txs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .tx { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 12px; padding: 12px 14px; }
+  .tx .who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .tx .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tx .arrow { color: var(--muted); font-weight: 400; flex: none; }
+  .tx strong { font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .ledger { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .ledger th { text-align: right; font-weight: 500; color: var(--muted); font-size: 12px; padding: 0 0 6px; }
+  .ledger th:first-child, .ledger td:first-child { text-align: left; }
+  .ledger td { text-align: right; padding: 8px 0; border-top: 1px solid var(--line); }
+  .ledger td:first-child { font-weight: 600; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ledger .adj { display: block; font-size: 11px; color: var(--warn-text); }
+  .pos { color: var(--plus); font-weight: 700; }
+  .neg { color: var(--minus); font-weight: 700; }
+
+  .links { display: flex; justify-content: center; gap: 16px; margin-top: 4px; }
+  .links button { border: 0; background: transparent; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding: 6px; }
+
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 16px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(to bottom, transparent, var(--bg) 35%); }
+  .bar-inner { max-width: 528px; margin: 0 auto; display: flex; gap: 8px; }
+  .btn { flex: 1; height: 52px; border-radius: 14px; border: 0; font-weight: 700; font-size: 16px; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.secondary { flex: 0 0 auto; padding: 0 16px; background: var(--surface); border: 1px solid var(--line-strong); font-weight: 600; font-size: 15px; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+
+  body[data-phase="play"] .only-settle,
+  body[data-phase="settle"] .only-play { display: none !important; }
+
+  .toast { position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); transform: translate(-50%, 8px); background: var(--text); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 380px) {
+    h1 { font-size: 18px; }
+    .steps button { padding: 5px 9px; font-size: 12px; }
+    .step { width: 36px; height: 38px; }
+    .p-count { width: 40px; }
+    .chip-field { width: 108px; }
+  }
+</style>
+</head>
+<body data-phase="play">
+<div class="wrap">
+  <header>
+    <h1>포커 칩 계산기</h1>
+    <nav class="steps">
+      <button type="button" data-go="play">① 바이인</button>
+      <button type="button" data-go="settle">② 정산</button>
+    </nav>
+  </header>
+
+  <section class="card">
+    <h2>설정</h2>
+    <div class="settings">
+      <div class="field">
+        <label for="buyIn">1바이인 금액</label>
+        <div class="unit"><input id="buyIn" type="number" inputmode="numeric" min="1" placeholder="5000"><span>원</span></div>
+      </div>
+      <div class="field">
+        <label for="chipsPer">1바이인 칩 수</label>
+        <div class="unit"><input id="chipsPer" type="number" inputmode="numeric" min="1" placeholder="500"><span>칩</span></div>
+      </div>
+    </div>
+    <p class="hint" id="perChip"></p>
+  </section>
+
+  <section class="card">
+    <h2><span class="only-play">플레이어 · 바이인</span><span class="only-settle">남은 칩 입력</span><small id="totals"></small></h2>
+    <ul class="players" id="players"></ul>
+    <button type="button" class="add only-play" id="addPlayer">+ 인원 추가</button>
+    <div class="check only-settle" id="check"></div>
+  </section>
+
+  <section class="card only-settle" id="results"></section>
+
+  <div class="links">
+    <button type="button" id="newGame">새 게임 (이름 유지)</button>
+    <button type="button" id="resetAll">전체 초기화</button>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <button type="button" class="btn primary only-play" id="endGame">게임 종료 · 남은 칩 입력</button>
+    <button type="button" class="btn secondary only-settle" id="backPlay">← 바이인</button>
+    <button type="button" class="btn primary only-settle" id="copy">결과 복사</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  const KEY = 'poker-chip-calc-v1';
+  const $ = s => document.querySelector(s);
+  const fmt = n => Math.round(n).toLocaleString('ko-KR');
+  const signed = n => (Math.round(n) > 0 ? '+' : Math.round(n) < 0 ? '-' : '') + fmt(Math.abs(n));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const toInt = v => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= 0 ? n : 0; };
+
+  let state = load() || fresh();
+
+  function fresh() {
+    return {
+      buyIn: 5000,
+      chipsPerBuyIn: 500,
+      phase: 'play',
+      nextId: 3,
+      players: [
+        { id: 1, name: '플레이어 1', buyIns: 1, chips: '' },
+        { id: 2, name: '플레이어 2', buyIns: 1, chips: '' },
+      ],
+    };
+  }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && Array.isArray(s.players)) return s;
+    } catch (e) {}
+    return null;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  const find = id => state.players.find(p => String(p.id) === String(id));
+  const nameOf = (p, i) => p.name.trim() || `플레이어 ${i + 1}`;
+  const settingsOk = () => state.buyIn > 0 && state.chipsPerBuyIn > 0;
+  const won = chips => chips * state.buyIn / state.chipsPerBuyIn;
+  const ready = () => settingsOk() && state.players.length >= 2 && state.players.every(p => p.chips !== '');
+
+  // ---------- 정산 계산 (모든 값은 칩 단위 정수로 계산하고 표시할 때만 원으로 바꿈) ----------
+
+  function compute() {
+    const C = state.chipsPerBuyIn;
+    const rows = state.players.map((p, i) => {
+      const invested = p.buyIns * C;
+      const chips = toInt(p.chips);
+      return { id: p.id, idx: i, name: nameOf(p, i), buyIns: p.buyIns, invested, chips, adj: chips, before: chips - invested };
+    });
+    const bought = rows.reduce((s, r) => s + r.invested, 0);
+    const remaining = rows.reduce((s, r) => s + r.chips, 0);
+    const diff = remaining - bought;
+
+    // 칩 합계가 안 맞으면 가장 많이 딴 사람의 칩으로 차이를 흡수
+    // 남는 칩은 딴 만큼까지만 빼고, 넘치면 다음으로 많이 딴 사람에게서 뺌
+    let target = null;
+    if (diff !== 0) {
+      const order = rows.slice().sort((a, b) => b.before - a.before);
+      target = order[0];
+      if (diff > 0) {
+        let left = diff;
+        for (const r of order) {
+          if (!left || r.before <= 0) break;
+          const take = Math.min(left, r.before);
+          r.adj -= take;
+          left -= take;
+        }
+      } else {
+        target.adj -= diff;
+      }
+    }
+    rows.forEach(r => { r.net = r.adj - r.invested; });
+    return { rows, bought, remaining, diff, target, transfers: minTransfers(rows) };
+  }
+
+  function minTransfers(rows) {
+    const debt = rows.filter(r => r.net < 0).map(r => ({ r, amt: -r.net }));
+    const cred = rows.filter(r => r.net > 0).map(r => ({ r, amt: r.net }));
+    const out = [];
+    // 금액이 딱 맞는 쌍은 한 번에 정리
+    for (const d of debt) {
+      const c = cred.find(c => c.amt > 0 && c.amt === d.amt);
+      if (c) { out.push({ from: d.r, to: c.r, chips: d.amt }); d.amt = 0; c.amt = 0; }
+    }
+    // 나머지는 가장 많이 잃은 사람 → 가장 많이 딴 사람 순으로
+    for (;;) {
+      const d = debt.filter(x => x.amt > 0).sort((a, b) => b.amt - a.amt)[0];
+      const c = cred.filter(x => x.amt > 0).sort((a, b) => b.amt - a.amt)[0];
+      if (!d || !c) break;
+      const x = Math.min(d.amt, c.amt);
+      out.push({ from: d.r, to: c.r, chips: x });
+      d.amt -= x;
+      c.amt -= x;
+    }
+    return out.sort((a, b) => a.from.idx - b.from.idx || a.to.idx - b.to.idx);
+  }
+
+  function adjustNote(res) {
+    const n = Math.abs(res.diff);
+    const changed = res.rows.filter(r => r.adj !== r.chips);
+    const list = changed.map(r => `${esc(r.name)} ${fmt(r.chips)} → ${fmt(r.adj)}칩`).join(', ');
+    const who = res.target.before > 0 ? '가장 많이 딴' : '손익이 가장 좋은';
+    if (res.diff > 0) {
+      const how = changed.length > 1
+        ? `가장 많이 딴 사람부터 딴 만큼까지 차례로 칩을 빼서 계산했어요.`
+        : `가장 많이 딴 ${esc(res.target.name)}의 칩에서 차이만큼 빼고 계산했어요.`;
+      return `<div class="notice">
+        <b>남은 칩이 ${fmt(n)}칩 많아요</b>
+        <p>산 칩은 ${fmt(res.bought)}칩인데 남은 칩을 합하면 ${fmt(res.remaining)}칩이에요. 이대로면 딴 돈이 잃은 돈보다 ${fmt(won(n))}원 많아서 정산이 맞지 않아요.</p>
+        <p>그래서 ${how} (${list})</p>
+        <p>칩을 다시 세서 고치면 결과가 바로 바뀌어요.</p>
+      </div>`;
+    }
+    return `<div class="notice">
+      <b>남은 칩이 ${fmt(n)}칩 모자라요</b>
+      <p>산 칩은 ${fmt(res.bought)}칩인데 남은 칩을 합하면 ${fmt(res.remaining)}칩이에요. 이대로면 잃은 돈이 딴 돈보다 ${fmt(won(n))}원 많아서 정산이 맞지 않아요.</p>
+      <p>그래서 ${who} ${esc(res.target.name)}의 칩에 차이만큼 더해서 계산했어요. (${list})</p>
+      <p>칩을 다시 세서 고치면 결과가 바로 바뀌어요.</p>
+    </div>`;
+  }
+
+  // ---------- 렌더링 ----------
+
+  function render() {
+    document.body.dataset.phase = state.phase;
+    $('#buyIn').value = state.buyIn || '';
+    $('#chipsPer').value = state.chipsPerBuyIn || '';
+    renderPlayers();
+    renderDerived();
+  }
+
+  function renderPlayers() {
+    const play = state.phase === 'play';
+    $('#players').innerHTML = state.players.map((p, i) => play ? `
+      <li class="player" data-id="${p.id}">
+        <div class="p-main">
+          <input class="p-name" value="${esc(p.name)}" maxlength="16" aria-label="이름" enterkeyhint="done">
+          <div class="p-sub"></div>
+        </div>
+        <div class="stepper">
+          <button type="button" class="step minus" data-act="dec" aria-label="바이인 빼기">−</button>
+          <input class="p-count" type="number" inputmode="numeric" min="0" value="${p.buyIns}" aria-label="바이인 수">
+          <button type="button" class="step plus" data-act="inc" aria-label="바이인 추가">+</button>
+        </div>
+        <button type="button" class="del" data-act="del" aria-label="삭제">×</button>
+      </li>` : `
+      <li class="player" data-id="${p.id}">
+        <div class="p-main">
+          <div class="p-label">${esc(nameOf(p, i))}</div>
+          <div class="p-sub"></div>
+        </div>
+        <div class="chip-field unit">
+          <input class="p-chips" type="number" inputmode="numeric" min="0" placeholder="남은 칩" value="${p.chips === '' ? '' : p.chips}" aria-label="${esc(nameOf(p, i))} 남은 칩" enterkeyhint="next">
+          <span>칩</span>
+        </div>
+      </li>`).join('');
+  }
+
+  function renderDerived() {
+    const B = state.buyIn, C = state.chipsPerBuyIn;
+    const play = state.phase === 'play';
+
+    if (settingsOk()) {
+      const v = B / C;
+      const per = Number.isInteger(v) ? fmt(v) : v.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+      $('#perChip').textContent = `1칩 = ${per}원`;
+    } else {
+      $('#perChip').textContent = '바이인 금액과 칩 수를 입력해 주세요';
+    }
+
+    document.querySelectorAll('#players .player').forEach(li => {
+      const p = find(li.dataset.id);
+      li.querySelector('.p-sub').textContent = play
+        ? `${fmt(p.buyIns * B)}원 · ${fmt(p.buyIns * C)}칩`
+        : `${p.buyIns}바이인 · ${fmt(p.buyIns * C)}칩 삼`;
+    });
+
+    const totalBuyIns = state.players.reduce((s, p) => s + p.buyIns, 0);
+    $('#totals').textContent = `${state.players.length}명 · ${totalBuyIns}바이인 · ${fmt(totalBuyIns * B)}원`;
+
+    document.querySelectorAll('.steps button').forEach(b => b.classList.toggle('on', b.dataset.go === state.phase));
+    $('#copy').disabled = !ready();
+
+    if (!play) {
+      renderCheck();
+      renderResults();
+    }
+  }
+
+  function renderCheck() {
+    const C = state.chipsPerBuyIn;
+    const bought = state.players.reduce((s, p) => s + p.buyIns * C, 0);
+    const remaining = state.players.reduce((s, p) => s + toInt(p.chips), 0);
+    const missing = state.players.filter(p => p.chips === '').length;
+    const diff = remaining - bought;
+    let badge;
+    if (missing) badge = `<span class="badge">${missing}명 입력 전</span>`;
+    else if (diff === 0) badge = `<span class="badge ok">✓ 딱 맞아요</span>`;
+    else if (diff > 0) badge = `<span class="badge warn">${fmt(diff)}칩 많음</span>`;
+    else badge = `<span class="badge warn">${fmt(-diff)}칩 모자람</span>`;
+    $('#check').innerHTML = `<span>남은 칩 합계 <b>${fmt(remaining)}</b> / 산 칩 <b>${fmt(bought)}</b></span>${badge}`;
+  }
+
+  function renderResults() {
+    const el = $('#results');
+    if (!settingsOk()) {
+      el.innerHTML = `<h2>정산 결과</h2><p class="empty">위에서 바이인 금액과 칩 수를 먼저 입력해 주세요.</p>`;
+      return;
+    }
+    if (!ready()) {
+      el.innerHTML = `<h2>정산 결과</h2><p class="empty">모든 사람의 남은 칩을 입력하면 결과가 나와요. 칩이 없으면 0을 입력하세요.</p>`;
+      return;
+    }
+    const res = compute();
+    let h = `<h2>정산 결과</h2>`;
+    if (res.diff !== 0) h += adjustNote(res);
+    h += res.transfers.length
+      ? `<ul class="txs">${res.transfers.map(t => `
+          <li class="tx">
+            <div class="who"><span>${esc(t.from.name)}</span><span class="arrow">→</span><span>${esc(t.to.name)}</span></div>
+            <strong>${fmt(won(t.chips))}원</strong>
+          </li>`).join('')}</ul>`
+      : `<p class="empty">주고받을 돈이 없어요.</p>`;
+    h += `<h3>개인별 손익</h3>
+      <table class="ledger">
+        <thead><tr><th>이름</th><th>바이인</th><th>남은 칩</th><th>손익</th></tr></thead>
+        <tbody>${res.rows.map(r => `
+          <tr>
+            <td>${esc(r.name)}</td>
+            <td>${r.buyIns} <span style="color:var(--muted)">(${fmt(won(r.invested))}원)</span></td>
+            <td>${fmt(r.adj)}${r.adj !== r.chips ? `<span class="adj">원래 ${fmt(r.chips)}</span>` : ''}</td>
+            <td class="${r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : ''}">${signed(won(r.net))}원</td>
+          </tr>`).join('')}</tbody>
+      </table>`;
+    el.innerHTML = h;
+  }
+
+  function resultText() {
+    const res = compute();
+    const lines = [`[포커 정산] 1바이인 ${fmt(state.buyIn)}원 · ${fmt(state.chipsPerBuyIn)}칩`];
+    res.rows.forEach(r => {
+      const chips = r.adj !== r.chips ? `${fmt(r.chips)}칩(→${fmt(r.adj)} 보정)` : `${fmt(r.chips)}칩`;
+      lines.push(`${r.name}: ${r.buyIns}바이인 · ${chips} → ${signed(won(r.net))}원`);
+    });
+    if (res.diff > 0) lines.push(`※ 남은 칩이 ${fmt(res.diff)}칩 많아서 가장 많이 딴 사람 칩에서 빼고 계산`);
+    if (res.diff < 0) lines.push(`※ 남은 칩이 ${fmt(-res.diff)}칩 모자라서 ${res.target.name} 칩에 더해서 계산`);
+    lines.push('', '[송금]');
+    if (res.transfers.length) res.transfers.forEach(t => lines.push(`${t.from.name} → ${t.to.name} ${fmt(won(t.chips))}원`));
+    else lines.push('주고받을 돈 없음');
+    return lines.join('\n');
+  }
+
+  // ---------- 동작 ----------
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  function setPhase(phase) {
+    if (phase === state.phase) return;
+    if (phase === 'settle') {
+      if (state.players.length < 2) return toast('2명 이상 있어야 정산할 수 있어요');
+      if (!settingsOk()) return toast('바이인 금액과 칩 수를 입력해 주세요');
+    }
+    state.phase = phase;
+    save();
+    render();
+    window.scrollTo(0, 0);
+    if (phase === 'settle') {
+      const first = document.querySelector('.p-chips');
+      if (first && first.value === '') first.focus();
+    }
+  }
+
+  $('#buyIn').addEventListener('input', e => { state.buyIn = toInt(e.target.value); save(); renderDerived(); });
+  $('#chipsPer').addEventListener('input', e => { state.chipsPerBuyIn = toInt(e.target.value); save(); renderDerived(); });
+
+  $('#players').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const li = btn.closest('.player');
+    const p = find(li.dataset.id);
+    const act = btn.dataset.act;
+    if (act === 'del') {
+      const i = state.players.indexOf(p);
+      if (!confirm(`${nameOf(p, i)}을(를) 삭제할까요?`)) return;
+      state.players.splice(i, 1);
+      save();
+      renderPlayers();
+      renderDerived();
+      return;
+    }
+    p.buyIns = act === 'inc' ? p.buyIns + 1 : Math.max(0, p.buyIns - 1);
+    li.querySelector('.p-count').value = p.buyIns;
+    save();
+    renderDerived();
+  });
+
+  $('#players').addEventListener('input', e => {
+    const li = e.target.closest('.player');
+    if (!li) return;
+    const p = find(li.dataset.id);
+    const cls = e.target.classList;
+    if (cls.contains('p-name')) p.name = e.target.value;
+    else if (cls.contains('p-count')) p.buyIns = toInt(e.target.value);
+    else if (cls.contains('p-chips')) p.chips = e.target.value.trim() === '' ? '' : toInt(e.target.value);
+    save();
+    renderDerived();
+  });
+
+  $('#players').addEventListener('change', e => {
+    if (e.target.classList.contains('p-count') && e.target.value === '') e.target.value = '0';
+  });
+
+  $('#players').addEventListener('focusin', e => {
+    if (e.target.matches('.p-name, .p-count, .p-chips')) e.target.select();
+  });
+
+  $('#players').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (e.target.classList.contains('p-chips')) {
+      const all = [...document.querySelectorAll('.p-chips')];
+      const next = all[all.indexOf(e.target) + 1];
+      next ? next.focus() : e.target.blur();
+    } else if (e.target.matches('.p-name, .p-count')) {
+      e.target.blur();
+    }
+  });
+
+  $('#addPlayer').addEventListener('click', () => {
+    const p = { id: state.nextId++, name: `플레이어 ${state.players.length + 1}`, buyIns: 1, chips: '' };
+    state.players.push(p);
+    save();
+    renderPlayers();
+    renderDerived();
+    const input = document.querySelector(`.player[data-id="${p.id}"] .p-name`);
+    input.focus();
+  });
+
+  document.querySelectorAll('.steps button').forEach(b => b.addEventListener('click', () => setPhase(b.dataset.go)));
+  $('#endGame').addEventListener('click', () => setPhase('settle'));
+  $('#backPlay').addEventListener('click', () => setPhase('play'));
+
+  $('#copy').addEventListener('click', async () => {
+    if (!ready()) return;
+    const text = resultText();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    toast('결과를 복사했어요');
+  });
+
+  $('#newGame').addEventListener('click', () => {
+    if (!confirm('이름은 그대로 두고 바이인과 남은 칩을 초기화할까요?')) return;
+    state.players.forEach(p => { p.buyIns = 1; p.chips = ''; });
+    state.phase = 'play';
+    save();
+    render();
+  });
+
+  $('#resetAll').addEventListener('click', () => {
+    if (!confirm('인원, 이름, 설정까지 모두 처음 상태로 돌릴까요?')) return;
+    state = fresh();
+    save();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
