@@ -27,6 +27,10 @@
     --warn-bg: #fff6df;
     --warn-line: #efc66e;
     --warn-text: #6e4600;
+    --suit-s: #17201b;
+    --suit-h: #d6293e;
+    --suit-d: #2563eb;
+    --suit-c: #15803d;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -47,6 +51,10 @@
       --warn-bg: #2b2310;
       --warn-line: #6b5419;
       --warn-text: #f3cd78;
+      --suit-s: #e7eee9;
+      --suit-h: #ff6b7d;
+      --suit-d: #6ea8ff;
+      --suit-c: #4fd08f;
     }
   }
 
@@ -85,7 +93,7 @@
   .unit { position: relative; }
   .unit span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; pointer-events: none; }
   .unit input { padding-right: 34px; }
-  .field input, .p-name, .p-count, .p-chips {
+  .field input, .p-name, .p-count, .p-chips, .pct {
     width: 100%; background: var(--surface-2); border: 1px solid transparent; border-radius: 10px;
     padding: 10px 12px; outline: none; font-variant-numeric: tabular-nums;
   }
@@ -156,12 +164,17 @@
   .toast { position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); transform: translate(-50%, 8px); background: var(--text); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 14px; margin: 0 0 12px; }
-  .modes button { border: 0; background: transparent; color: var(--muted); font-size: 15px; font-weight: 600; padding: 9px 0; border-radius: 10px; }
+  .modes { display: grid; grid-template-columns: repeat(5, auto); gap: 2px; background: var(--surface-2); padding: 4px; border-radius: 14px; margin: 0 0 12px; }
+  .modes button { border: 0; background: transparent; color: var(--muted); font-size: 14px; font-weight: 600; padding: 9px 4px; border-radius: 10px; white-space: nowrap; }
   .modes button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
 
-  body[data-mode="cash"] .only-tour,
-  body[data-mode="tour"] .only-cash { display: none !important; }
+  body:not([data-mode="people"]) .only-people,
+  body:not([data-mode="cash"]) .only-cash,
+  body:not([data-mode="tour"]) .only-tour,
+  body:not([data-mode="gto"]) .only-gto,
+  body:not([data-mode="odds"]) .only-odds,
+  body[data-tview="timer"] .only-tplayers,
+  body[data-tview="players"] .only-ttimer { display: none !important; }
 
   .clock { text-align: center; padding: 16px 16px 14px; }
   .clock.up { animation: blind-up 0.9s ease 3; }
@@ -198,8 +211,82 @@
   #tSettings[data-growth="add"] .only-mul,
   #tSettings[data-growth="mul"] .only-add { display: none; }
 
+  .player.off .p-main { opacity: 0.45; }
+  .step:disabled { opacity: 0.3; cursor: default; }
+  .t-count { min-width: 40px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .out-btn { flex: none; height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: transparent; color: var(--minus); font-size: 14px; font-weight: 700; }
+  .place { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .place.win { color: var(--accent); }
+  .undo { flex: none; height: 34px; padding: 0 10px; border: 0; border-radius: 9px; background: var(--surface-2); color: var(--muted); font-size: 13px; font-weight: 600; }
+  .player.busted .p-label { color: var(--muted); }
+  #tField { margin-top: 4px; }
+  .mini { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px; cursor: pointer; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .mini b { font-size: 15px; }
+  .field.full { grid-column: 1 / -1; }
+  #tPrizes { margin-top: 8px; }
+  .prize-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+  .prize-row .rank { width: 36px; flex: none; font-weight: 700; }
+  .prize-row .unit { width: 104px; flex: none; }
+  .pct { text-align: right; font-weight: 700; padding: 8px 12px; }
+  .prize-row .amt { flex: 1; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ghost.wide { width: 100%; margin-top: 14px; padding: 12px; }
+
+  .pos-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pos-chips button { flex: 1 0 auto; min-width: 40px; border: 0; background: var(--surface-2); color: var(--muted); font-size: 13px; font-weight: 700; padding: 8px 4px; border-radius: 9px; }
+  body[data-mode="gto"] .bar, body[data-mode="odds"] .bar { display: none; }
+  .pos-chips button.on { background: var(--accent); color: var(--accent-ink); }
+
+  .grid13 { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; margin-top: 12px; }
+  .grid13 button { aspect-ratio: 1; min-width: 0; border: 0; padding: 0; border-radius: 4px; background: var(--surface-2); color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: -0.05em; }
+  .grid13 button.in { background: var(--accent); color: var(--accent-ink); }
+  .grid13 button.sel { outline: 2px solid var(--text); outline-offset: 1px; position: relative; z-index: 1; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--line-strong); }
+  .legend i.in { background: var(--accent); border-color: var(--accent); }
+  .hand-big { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-right: 8px; }
+  .verdicts { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; margin-top: 12px; }
+  .verdicts div { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 13px; }
+  .verdicts b { display: block; font-size: 12px; color: var(--muted); }
+  .verdicts .r { color: var(--plus); font-weight: 700; }
+  .verdicts .f { color: var(--muted); }
+  .verdicts .now { box-shadow: inset 0 0 0 2px var(--accent); }
+
+  .slots { display: grid; gap: 10px; }
+  .slot-row { display: flex; align-items: center; gap: 8px; }
+  .slot-row > span { width: 44px; flex: none; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .slot-row > div { display: flex; gap: 6px; }
+  .slot { width: 42px; height: 56px; padding: 0; border-radius: 8px; border: 1.5px dashed var(--line-strong); background: transparent; display: grid; place-content: center; font-size: 17px; font-weight: 800; line-height: 1.05; }
+  .slot.filled { border: 1px solid var(--line-strong); background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); }
+  .slot.active { border: 2px solid var(--accent); box-shadow: 0 0 0 3px var(--plus-bg); }
+  .slot.gap { margin-left: 6px; }
+  .deck { display: grid; grid-template-columns: repeat(13, 1fr); gap: 3px; margin-top: 14px; }
+  .deck button { min-width: 0; height: 40px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); display: grid; place-content: center; font-size: 13px; font-weight: 800; line-height: 1.05; }
+  .deck button small, .slot small { font-size: 0.85em; }
+  .deck button:disabled { opacity: 0.18; cursor: default; }
+  .s0 { color: var(--suit-s); }
+  .s1 { color: var(--suit-h); }
+  .s2 { color: var(--suit-d); }
+  .s3 { color: var(--suit-c); }
+  .probs { margin-top: 12px; }
+  .prob { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .prob b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .eq { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .eq div { background: var(--surface-2); border-radius: 12px; padding: 10px 4px; }
+  .eq small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .eq b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .eq .win b { color: var(--plus); }
+  .eq .lose b { color: var(--minus); }
+  .mh { display: grid; grid-template-columns: 118px 1fr 54px; align-items: center; gap: 8px; padding: 5px 0; font-size: 14px; }
+  .mh i { position: relative; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .mh i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--w); background: var(--accent); border-radius: inherit; }
+  .mh b { text-align: right; font-variant-numeric: tabular-nums; }
+  .gto-tip { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
+
   @media (max-width: 380px) {
     h1 { font-size: 18px; }
+    .modes button { font-size: 13px; padding: 9px 2px; }
+    .slot { width: 38px; height: 52px; }
     .steps button { padding: 5px 9px; font-size: 12px; }
     .step { width: 36px; height: 38px; }
     .p-count { width: 40px; }
@@ -207,20 +294,39 @@
   }
 </style>
 </head>
-<body data-phase="play" data-mode="cash">
+<body data-phase="play" data-mode="cash" data-tview="timer">
 <div class="wrap">
   <header>
     <h1>포커 칩 계산기</h1>
-    <nav class="steps only-cash">
+    <nav class="steps only-cash" id="cashSteps">
       <button type="button" data-go="play">① 바이인</button>
       <button type="button" data-go="settle">② 정산</button>
+    </nav>
+    <nav class="steps only-tour" id="tViews">
+      <button type="button" data-tview="timer">타이머</button>
+      <button type="button" data-tview="players">참가자·상금</button>
     </nav>
   </header>
 
   <nav class="modes" aria-label="모드">
+    <button type="button" data-mode="people">인원</button>
     <button type="button" data-mode="cash">캐시 게임</button>
     <button type="button" data-mode="tour">토너먼트</button>
+    <button type="button" data-mode="gto">GTO</button>
+    <button type="button" data-mode="odds">확률</button>
   </nav>
+
+  <div class="only-people">
+    <section class="card">
+      <h2>인원 <small id="rosterCount"></small></h2>
+      <ul class="players" id="roster"></ul>
+      <button type="button" class="add" id="addPlayer">+ 인원 추가</button>
+      <p class="hint">여기 적은 인원을 캐시 게임과 토너먼트에서 같이 써요. 안 하는 사람은 그 모드에서 바이인을 0으로 두면 빠져요.</p>
+    </section>
+    <div class="links">
+      <button type="button" id="resetAll">명단 초기화</button>
+    </div>
+  </div>
 
   <div class="only-cash">
   <section class="card">
@@ -241,7 +347,7 @@
   <section class="card">
     <h2><span class="only-play">플레이어 · 바이인</span><span class="only-settle">남은 칩 입력</span><small id="totals"></small></h2>
     <ul class="players" id="players"></ul>
-    <button type="button" class="add only-play" id="addPlayer">+ 인원 추가</button>
+    <button type="button" class="add only-play" data-goto="people">인원 추가·이름 수정은 인원 탭에서 →</button>
     <div class="check only-settle" id="check"></div>
   </section>
 
@@ -249,11 +355,11 @@
 
   <div class="links">
     <button type="button" id="newGame">새 게임 (이름 유지)</button>
-    <button type="button" id="resetAll">전체 초기화</button>
   </div>
   </div>
 
   <div class="only-tour">
+    <div class="only-ttimer">
     <section class="card clock" id="clock">
       <div class="clock-top">
         <b id="tLevel">레벨 1</b>
@@ -267,6 +373,7 @@
       </div>
       <div class="progress"><i id="tBar"></i></div>
       <p class="next" id="tNext"></p>
+      <p class="next" id="tField"></p>
       <p class="hint" id="tSound" hidden>🔈 화면을 한 번 누르면 알림 소리가 켜져요</p>
       <div class="skip">
         <button type="button" id="tPrev">◀ 이전 레벨</button>
@@ -338,11 +445,140 @@
         <tbody></tbody>
       </table>
     </section>
+    </div>
+
+    <div class="only-tplayers">
+      <section class="card mini" id="tMini" role="button" aria-label="타이머 보기">
+        <span id="tMiniText"></span>
+        <span class="badge" id="tMiniStatus"></span>
+      </section>
+
+      <section class="card">
+        <h2>토너먼트 설정</h2>
+        <div class="settings">
+          <div class="field">
+            <label for="tBuyIn">1바이인 금액</label>
+            <div class="unit"><input id="tBuyIn" type="number" inputmode="numeric" min="0" placeholder="10000"><span>원</span></div>
+          </div>
+          <div class="field">
+            <label for="tStack">1바이인 칩 수</label>
+            <div class="unit"><input id="tStack" type="number" inputmode="numeric" min="0" placeholder="1000"><span>칩</span></div>
+          </div>
+          <div class="field full">
+            <label for="tMaxBuy">1인 최대 바이인 (0이면 제한 없음)</label>
+            <div class="unit"><input id="tMaxBuy" type="number" inputmode="numeric" min="0" placeholder="2"><span>번</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>참가자 <small id="tTotals"></small></h2>
+        <ul class="players" id="tPlayers"></ul>
+        <button type="button" class="add" data-goto="people">인원 추가·이름 수정은 인원 탭에서 →</button>
+      </section>
+
+      <section class="card">
+        <h2>상금 <small id="tPool"></small></h2>
+        <div class="field">
+          <label for="tPlaces">몇 등까지 상금을 줄까요</label>
+          <div class="unit"><input id="tPlaces" type="number" inputmode="numeric" min="1" max="20"><span>등</span></div>
+        </div>
+        <div id="tPrizes"></div>
+        <div class="check" id="tPctCheck"></div>
+      </section>
+
+      <section class="card" id="tResults"></section>
+
+      <div class="links">
+        <button type="button" id="tNewGame">새 토너먼트 (이름 유지)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="only-gto">
+    <section class="card">
+      <h2>테이블</h2>
+      <div class="tset">
+        <div class="field">
+          <label>인원</label>
+          <div class="seg" data-table="n"></div>
+        </div>
+        <div class="field">
+          <label>내 포지션</label>
+          <div class="pos-chips" data-table="pos"></div>
+        </div>
+      </div>
+      <p class="hint" data-table="desc"></p>
+    </section>
+
+    <section class="card">
+      <h2>오픈 레인지 <small id="gStat"></small></h2>
+      <p class="hint" id="gNote" style="margin-top:0"></p>
+      <div class="grid13" id="gGrid"></div>
+      <div class="legend"><span><i class="in"></i>레이즈</span><span><i></i>폴드</span><span>위 오른쪽: 수티드 · 아래 왼쪽: 오프수트</span></div>
+    </section>
+
+    <section class="card" id="gHand"></section>
+
+    <p class="hint">100BB · 레이크 없음 · 2~2.5BB 오픈 기준으로 솔버 결과를 단순화한 참고용 차트예요. 섞어서 하는 핸드는 더 자주 하는 쪽으로 정리했어요.</p>
+  </div>
+
+  <div class="only-odds">
+    <section class="card">
+      <h2>테이블</h2>
+      <div class="tset">
+        <div class="field">
+          <label>인원</label>
+          <div class="seg" data-table="n"></div>
+        </div>
+        <div class="field">
+          <label>내 포지션</label>
+          <div class="pos-chips" data-table="pos"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>카드 <small id="oStage"></small></h2>
+      <div class="slots" id="oSlots">
+        <div class="slot-row"><span>내 카드</span><div id="oHole"></div></div>
+        <div class="slot-row"><span>보드</span><div id="oBoard"></div></div>
+      </div>
+      <p class="gto-tip" id="oGtoTip" hidden></p>
+      <div class="deck" id="oDeck"></div>
+      <p class="hint">칸을 고르고 아래에서 카드를 누르세요. 채운 칸을 다시 누르면 지워져요.</p>
+      <div class="links">
+        <button type="button" id="oClearBoard">보드만 지우기</button>
+        <button type="button" id="oClear">모두 지우기</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>특정 카드가 나올 확률</h2>
+      <div class="tset">
+        <div class="field">
+          <label>숫자</label>
+          <div class="pos-chips" id="oRank"></div>
+        </div>
+        <div class="field">
+          <label>무늬</label>
+          <div class="seg" id="oSuit"></div>
+        </div>
+      </div>
+      <div id="oTarget"></div>
+    </section>
+
+    <section class="card" id="oEquity"></section>
+    <section class="card" id="oMade"></section>
+
+    <p class="hint">다른 사람이 든 카드는 모르니, 보이지 않는 카드는 모두 똑같이 나올 수 있다고 보고 계산해요. 그래서 특정 카드 확률은 인원과 상관없고, 인원은 승률에만 영향을 줘요.</p>
   </div>
 </div>
 
 <div class="bar">
   <div class="bar-inner">
+    <button type="button" class="btn secondary only-people" data-goto="cash">캐시 게임 →</button>
+    <button type="button" class="btn primary only-people" data-goto="tour">토너먼트 →</button>
     <button type="button" class="btn primary only-cash only-play" id="endGame">게임 종료 · 남은 칩 입력</button>
     <button type="button" class="btn secondary only-cash only-settle" id="backPlay">← 바이인</button>
     <button type="button" class="btn primary only-cash only-settle" id="copy">결과 복사</button>
@@ -362,8 +598,9 @@
   const toInt = v => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= 0 ? n : 0; };
   const toNum = v => { const n = parseFloat(v); return Number.isFinite(n) && n >= 0 ? n : 0; };
 
+  const MODES = ['people', 'cash', 'tour', 'gto', 'odds'];
   let state = load() || fresh();
-  if (state.mode !== 'tour') state.mode = 'cash';
+  if (!MODES.includes(state.mode)) state.mode = 'cash';
 
   function fresh() {
     return {
@@ -390,19 +627,21 @@
   }
 
   const find = id => state.players.find(p => String(p.id) === String(id));
-  const nameOf = (p, i) => p.name.trim() || `플레이어 ${i + 1}`;
+  const nameOf = p => p.name.trim() || `플레이어 ${state.players.indexOf(p) + 1}`;
+  // 인원 탭의 명단 중 캐시 게임에 바이인한 사람만 정산에 들어감
+  const cashPlayers = () => state.players.filter(p => p.buyIns > 0);
   const settingsOk = () => state.buyIn > 0 && state.chipsPerBuyIn > 0;
   const won = chips => chips * state.buyIn / state.chipsPerBuyIn;
-  const ready = () => settingsOk() && state.players.length >= 2 && state.players.every(p => p.chips !== '');
+  const ready = () => settingsOk() && cashPlayers().length >= 2 && cashPlayers().every(p => p.chips !== '');
 
   // ---------- 정산 계산 (모든 값은 칩 단위 정수로 계산하고 표시할 때만 원으로 바꿈) ----------
 
   function compute() {
     const C = state.chipsPerBuyIn;
-    const rows = state.players.map((p, i) => {
+    const rows = cashPlayers().map((p, i) => {
       const invested = p.buyIns * C;
       const chips = toInt(p.chips);
-      return { id: p.id, idx: i, name: nameOf(p, i), buyIns: p.buyIns, invested, chips, adj: chips, before: chips - invested };
+      return { id: p.id, idx: i, name: nameOf(p), buyIns: p.buyIns, invested, chips, adj: chips, before: chips - invested };
     });
     const bought = rows.reduce((s, r) => s + r.invested, 0);
     const remaining = rows.reduce((s, r) => s + r.chips, 0);
@@ -437,7 +676,7 @@
     // 금액이 딱 맞는 쌍은 한 번에 정리
     for (const d of debt) {
       const c = cred.find(c => c.amt > 0 && c.amt === d.amt);
-      if (c) { out.push({ from: d.r, to: c.r, chips: d.amt }); d.amt = 0; c.amt = 0; }
+      if (c) { out.push({ from: d.r, to: c.r, amt: d.amt }); d.amt = 0; c.amt = 0; }
     }
     // 나머지는 가장 많이 잃은 사람 → 가장 많이 딴 사람 순으로
     for (;;) {
@@ -445,7 +684,7 @@
       const c = cred.filter(x => x.amt > 0).sort((a, b) => b.amt - a.amt)[0];
       if (!d || !c) break;
       const x = Math.min(d.amt, c.amt);
-      out.push({ from: d.r, to: c.r, chips: x });
+      out.push({ from: d.r, to: c.r, amt: x });
       d.amt -= x;
       c.amt -= x;
     }
@@ -481,21 +720,40 @@
   function render() {
     document.body.dataset.phase = state.phase;
     document.body.dataset.mode = state.mode;
+    document.body.dataset.tview = tour.view;
     document.querySelectorAll('.modes button').forEach(b => b.classList.toggle('on', b.dataset.mode === state.mode));
+    document.querySelectorAll('#tViews button').forEach(b => b.classList.toggle('on', b.dataset.tview === tour.view));
     $('#buyIn').value = state.buyIn || '';
     $('#chipsPer').value = state.chipsPerBuyIn || '';
+    renderRoster();
     renderPlayers();
     renderDerived();
     renderTourInputs();
     renderTour();
+    renderPrizes();
+    renderTourPlayers();
+    renderTable();
+    renderGto();
+    renderOdds();
+  }
+
+  function renderRoster() {
+    $('#roster').innerHTML = state.players.map(p => `
+      <li class="player" data-id="${p.id}">
+        <div class="p-main">
+          <input class="p-name" value="${esc(p.name)}" maxlength="16" aria-label="이름" enterkeyhint="done">
+        </div>
+        <button type="button" class="del" data-act="del" aria-label="삭제">×</button>
+      </li>`).join('');
+    $('#rosterCount').textContent = `${state.players.length}명`;
   }
 
   function renderPlayers() {
     const play = state.phase === 'play';
-    $('#players').innerHTML = state.players.map((p, i) => play ? `
-      <li class="player" data-id="${p.id}">
+    $('#players').innerHTML = (play ? state.players : cashPlayers()).map(p => play ? `
+      <li class="player${p.buyIns ? '' : ' off'}" data-id="${p.id}">
         <div class="p-main">
-          <input class="p-name" value="${esc(p.name)}" maxlength="16" aria-label="이름" enterkeyhint="done">
+          <div class="p-label">${esc(nameOf(p))}</div>
           <div class="p-sub"></div>
         </div>
         <div class="stepper">
@@ -503,15 +761,14 @@
           <input class="p-count" type="number" inputmode="numeric" min="0" value="${p.buyIns}" aria-label="바이인 수">
           <button type="button" class="step plus" data-act="inc" aria-label="바이인 추가">+</button>
         </div>
-        <button type="button" class="del" data-act="del" aria-label="삭제">×</button>
       </li>` : `
       <li class="player" data-id="${p.id}">
         <div class="p-main">
-          <div class="p-label">${esc(nameOf(p, i))}</div>
+          <div class="p-label">${esc(nameOf(p))}</div>
           <div class="p-sub"></div>
         </div>
         <div class="chip-field unit">
-          <input class="p-chips" type="number" inputmode="numeric" min="0" placeholder="남은 칩" value="${p.chips === '' ? '' : p.chips}" aria-label="${esc(nameOf(p, i))} 남은 칩" enterkeyhint="next">
+          <input class="p-chips" type="number" inputmode="numeric" min="0" placeholder="남은 칩" value="${p.chips === '' ? '' : p.chips}" aria-label="${esc(nameOf(p))} 남은 칩" enterkeyhint="next">
           <span>칩</span>
         </div>
       </li>`).join('');
@@ -531,15 +788,16 @@
 
     document.querySelectorAll('#players .player').forEach(li => {
       const p = find(li.dataset.id);
-      li.querySelector('.p-sub').textContent = play
-        ? `${fmt(p.buyIns * B)}원 · ${fmt(p.buyIns * C)}칩`
-        : `${p.buyIns}바이인 · ${fmt(p.buyIns * C)}칩 삼`;
+      li.classList.toggle('off', !p.buyIns);
+      li.querySelector('.p-sub').textContent = !play
+        ? `${p.buyIns}바이인 · ${fmt(p.buyIns * C)}칩 삼`
+        : p.buyIns ? `${fmt(p.buyIns * B)}원 · ${fmt(p.buyIns * C)}칩` : '불참';
     });
 
     const totalBuyIns = state.players.reduce((s, p) => s + p.buyIns, 0);
-    $('#totals').textContent = `${state.players.length}명 · ${totalBuyIns}바이인 · ${fmt(totalBuyIns * B)}원`;
+    $('#totals').textContent = `${cashPlayers().length}명 · ${totalBuyIns}바이인 · ${fmt(totalBuyIns * B)}원`;
 
-    document.querySelectorAll('.steps button').forEach(b => b.classList.toggle('on', b.dataset.go === state.phase));
+    document.querySelectorAll('#cashSteps button').forEach(b => b.classList.toggle('on', b.dataset.go === state.phase));
     $('#copy').disabled = !ready();
 
     if (!play) {
@@ -550,9 +808,10 @@
 
   function renderCheck() {
     const C = state.chipsPerBuyIn;
-    const bought = state.players.reduce((s, p) => s + p.buyIns * C, 0);
-    const remaining = state.players.reduce((s, p) => s + toInt(p.chips), 0);
-    const missing = state.players.filter(p => p.chips === '').length;
+    const ps = cashPlayers();
+    const bought = ps.reduce((s, p) => s + p.buyIns * C, 0);
+    const remaining = ps.reduce((s, p) => s + toInt(p.chips), 0);
+    const missing = ps.filter(p => p.chips === '').length;
     const diff = remaining - bought;
     let badge;
     if (missing) badge = `<span class="badge">${missing}명 입력 전</span>`;
@@ -579,7 +838,7 @@
       ? `<ul class="txs">${res.transfers.map(t => `
           <li class="tx">
             <div class="who"><span>${esc(t.from.name)}</span><span class="arrow">→</span><span>${esc(t.to.name)}</span></div>
-            <strong>${fmt(won(t.chips))}원</strong>
+            <strong>${fmt(won(t.amt))}원</strong>
           </li>`).join('')}</ul>`
       : `<p class="empty">주고받을 돈이 없어요.</p>`;
     h += `<h3>개인별 손익</h3>
@@ -606,7 +865,7 @@
     if (res.diff > 0) lines.push(`※ 남은 칩이 ${fmt(res.diff)}칩 많아서 가장 많이 딴 사람 칩에서 빼고 계산`);
     if (res.diff < 0) lines.push(`※ 남은 칩이 ${fmt(-res.diff)}칩 모자라서 ${res.target.name} 칩에 더해서 계산`);
     lines.push('', '[송금]');
-    if (res.transfers.length) res.transfers.forEach(t => lines.push(`${t.from.name} → ${t.to.name} ${fmt(won(t.chips))}원`));
+    if (res.transfers.length) res.transfers.forEach(t => lines.push(`${t.from.name} → ${t.to.name} ${fmt(won(t.amt))}원`));
     else lines.push('주고받을 돈 없음');
     return lines.join('\n');
   }
@@ -625,7 +884,7 @@
   function setPhase(phase) {
     if (phase === state.phase) return;
     if (phase === 'settle') {
-      if (state.players.length < 2) return toast('2명 이상 있어야 정산할 수 있어요');
+      if (cashPlayers().length < 2) return toast('바이인한 사람이 2명 이상 있어야 정산할 수 있어요');
       if (!settingsOk()) return toast('바이인 금액과 칩 수를 입력해 주세요');
     }
     state.phase = phase;
@@ -646,17 +905,7 @@
     if (!btn) return;
     const li = btn.closest('.player');
     const p = find(li.dataset.id);
-    const act = btn.dataset.act;
-    if (act === 'del') {
-      const i = state.players.indexOf(p);
-      if (!confirm(`${nameOf(p, i)}을(를) 삭제할까요?`)) return;
-      state.players.splice(i, 1);
-      save();
-      renderPlayers();
-      renderDerived();
-      return;
-    }
-    p.buyIns = act === 'inc' ? p.buyIns + 1 : Math.max(0, p.buyIns - 1);
+    p.buyIns = btn.dataset.act === 'inc' ? p.buyIns + 1 : Math.max(0, p.buyIns - 1);
     li.querySelector('.p-count').value = p.buyIns;
     save();
     renderDerived();
@@ -667,8 +916,7 @@
     if (!li) return;
     const p = find(li.dataset.id);
     const cls = e.target.classList;
-    if (cls.contains('p-name')) p.name = e.target.value;
-    else if (cls.contains('p-count')) p.buyIns = toInt(e.target.value);
+    if (cls.contains('p-count')) p.buyIns = toInt(e.target.value);
     else if (cls.contains('p-chips')) p.chips = e.target.value.trim() === '' ? '' : toInt(e.target.value);
     save();
     renderDerived();
@@ -679,7 +927,7 @@
   });
 
   $('#players').addEventListener('focusin', e => {
-    if (e.target.matches('.p-name, .p-count, .p-chips')) e.target.select();
+    if (e.target.matches('.p-count, .p-chips')) e.target.select();
   });
 
   $('#players').addEventListener('keydown', e => {
@@ -688,28 +936,66 @@
       const all = [...document.querySelectorAll('.p-chips')];
       const next = all[all.indexOf(e.target) + 1];
       next ? next.focus() : e.target.blur();
-    } else if (e.target.matches('.p-name, .p-count')) {
+    } else if (e.target.matches('.p-count')) {
       e.target.blur();
     }
+  });
+
+  // ----- 인원 탭 (캐시 게임 · 토너먼트 공용 명단) -----
+
+  $('#roster').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act="del"]');
+    if (!btn) return;
+    const p = find(btn.closest('.player').dataset.id);
+    if (!confirm(`${nameOf(p)}을(를) 삭제할까요? 캐시 게임과 토너먼트 기록도 같이 지워져요.`)) return;
+    state.players.splice(state.players.indexOf(p), 1);
+    delete tour.entries[p.id];
+    tour.out = tour.out.filter(id => id !== p.id);
+    save();
+    saveTour();
+    renderRoster();
+  });
+
+  $('#roster').addEventListener('input', e => {
+    if (!e.target.classList.contains('p-name')) return;
+    find(e.target.closest('.player').dataset.id).name = e.target.value;
+    save();
+  });
+
+  $('#roster').addEventListener('focusin', e => {
+    if (e.target.classList.contains('p-name')) e.target.select();
+  });
+
+  $('#roster').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.classList.contains('p-name')) e.target.blur();
   });
 
   $('#addPlayer').addEventListener('click', () => {
     const p = { id: state.nextId++, name: `플레이어 ${state.players.length + 1}`, buyIns: 1, chips: '' };
     state.players.push(p);
     save();
-    renderPlayers();
-    renderDerived();
-    const input = document.querySelector(`.player[data-id="${p.id}"] .p-name`);
-    input.focus();
+    renderRoster();
+    document.querySelector(`#roster .player[data-id="${p.id}"] .p-name`).focus();
   });
 
-  document.querySelectorAll('.steps button').forEach(b => b.addEventListener('click', () => setPhase(b.dataset.go)));
+  $('#resetAll').addEventListener('click', () => {
+    if (!confirm('인원과 이름을 처음 상태로 돌릴까요? 캐시 게임 바이인·남은 칩과 토너먼트 참가 기록도 같이 지워져요.')) return;
+    const f = fresh();
+    state.players = f.players;
+    state.nextId = f.nextId;
+    state.phase = 'play';
+    tour.entries = {};
+    tour.out = [];
+    save();
+    saveTour();
+    render();
+  });
+
+  document.querySelectorAll('#cashSteps button').forEach(b => b.addEventListener('click', () => setPhase(b.dataset.go)));
   $('#endGame').addEventListener('click', () => setPhase('settle'));
   $('#backPlay').addEventListener('click', () => setPhase('play'));
 
-  $('#copy').addEventListener('click', async () => {
-    if (!ready()) return;
-    const text = resultText();
+  async function copyText(text) {
     try {
       await navigator.clipboard.writeText(text);
     } catch (e) {
@@ -721,6 +1007,10 @@
       ta.remove();
     }
     toast('결과를 복사했어요');
+  }
+
+  $('#copy').addEventListener('click', () => {
+    if (ready()) copyText(resultText());
   });
 
   $('#newGame').addEventListener('click', () => {
@@ -731,20 +1021,18 @@
     render();
   });
 
-  $('#resetAll').addEventListener('click', () => {
-    if (!confirm('인원, 이름, 설정까지 모두 처음 상태로 돌릴까요?')) return;
-    state = fresh();
-    save();
-    render();
-  });
-
-  document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => {
-    if (b.dataset.mode === state.mode) return;
-    state.mode = b.dataset.mode;
+  function setMode(mode) {
+    if (mode === state.mode) return;
+    state.mode = mode;
     save();
     render();
     window.scrollTo(0, 0);
-  }));
+  }
+  document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-goto]');
+    if (b) setMode(b.dataset.goto);
+  });
 
   // ---------- 토너먼트 (블라인드 타이머) ----------
   // 남은 시간은 매 틱마다 빼지 않고 끝나는 시각(endsAt)으로 계산해서, 화면이 꺼졌다 켜져도 정확함
@@ -756,6 +1044,11 @@
     return {
       sb: 5, bb: 10, growth: 'add', sbInc: 5, bbInc: 10, ratio: 1.33, minutes: 15, warnSec: 30, voice: true,
       level: 0, status: 'idle', endsAt: 0, left: 0, warned: false,
+      view: 'timer',
+      buyIn: 10000, stack: 1000, maxBuy: 2,
+      entries: {}, // 플레이어 id → 바이인 수 (없으면 1)
+      out: [], // 탈락한 순서대로 플레이어 id
+      places: 3, pcts: [50, 30, 20],
     };
   }
   function loadTour() {
@@ -990,6 +1283,9 @@
     $('#tMin').value = tour.minutes || '';
     $('#tWarn').value = tour.warnSec;
     $('#tVoice').checked = tour.voice;
+    $('#tBuyIn').value = tour.buyIn || '';
+    $('#tStack').value = tour.stack || '';
+    $('#tMaxBuy').value = tour.maxBuy;
     renderGrowth();
   }
 
@@ -1009,10 +1305,14 @@
     const st = tour.status;
     const left = remaining();
     const d = durMs();
+    const label = { idle: '대기', running: '진행 중', paused: '일시정지' }[st];
+    const badge = 'badge' + (st === 'running' ? ' ok' : st === 'paused' ? ' warn' : '');
     $('#clock').classList.toggle('warn', st === 'running' && warnOn() && left <= tour.warnSec * 1000);
     $('#tLevel').textContent = `레벨 ${tour.level + 1}`;
-    $('#tStatus').textContent = { idle: '대기', running: '진행 중', paused: '일시정지' }[st];
-    $('#tStatus').className = 'badge' + (st === 'running' ? ' ok' : st === 'paused' ? ' warn' : '');
+    $('#tStatus').textContent = $('#tMiniStatus').textContent = label;
+    $('#tStatus').className = $('#tMiniStatus').className = badge;
+    $('#tMiniText').innerHTML = `<b>레벨 ${tour.level + 1}</b> · ${fmt(sbAt(tour.level))} / ${fmt(bbAt(tour.level))} · ${clockText(left)}`;
+    $('#tField').textContent = fieldText(field());
     $('#tTime').textContent = clockText(left);
     $('#tSbNow').textContent = fmt(sbAt(tour.level));
     $('#tBbNow').textContent = fmt(bbAt(tour.level));
@@ -1087,6 +1387,689 @@
     saveTour();
     keepAwake();
     renderTour();
+  });
+
+  // ---------- 토너먼트 참가자 · 상금 ----------
+  // 참가자는 인원 탭 명단에서 바이인이 1 이상인 사람. 탈락 순서로 등수를 매기고 한 명 남으면 우승
+
+  const entriesOf = p => tour.entries[p.id] ?? 1;
+  const canRebuy = p => !tour.maxBuy || entriesOf(p) < tour.maxBuy;
+
+  function field() {
+    const ps = state.players.filter(p => entriesOf(p) > 0);
+    const ids = new Set(ps.map(p => p.id));
+    const out = tour.out.filter(id => ids.has(id));
+    const alive = ps.filter(p => !out.includes(p.id));
+    const entries = ps.reduce((s, p) => s + entriesOf(p), 0);
+    return { ps, out, alive, entries, pool: entries * tour.buyIn, done: ps.length >= 2 && alive.length === 1 };
+  }
+  function placeOf(f, p) {
+    const i = f.out.indexOf(p.id);
+    if (i >= 0) return f.ps.length - i;
+    return f.done ? 1 : 0;
+  }
+  function fieldText(f) {
+    if (!f.ps.length) return '';
+    let t = `남은 인원 ${f.alive.length}/${f.ps.length}명`;
+    if (tour.stack > 0 && f.alive.length) {
+      const avg = f.entries * tour.stack / f.alive.length;
+      const bb = bbAt(tour.level);
+      t += ` · 평균 스택 ${fmt(avg)}칩` + (bb > 0 ? ` (${fmt(avg / bb)}BB)` : '');
+    }
+    return t;
+  }
+
+  const PAYOUTS = { 1: [100], 2: [65, 35], 3: [50, 30, 20], 4: [45, 27, 17, 11], 5: [40, 25, 16, 11, 8] };
+  function payoutPreset(n) {
+    if (PAYOUTS[n]) return PAYOUTS[n].slice();
+    // 6등 이상은 등수마다 약 0.75배씩 줄어들게
+    const w = Array.from({ length: n }, (_, i) => 0.75 ** i);
+    const s = w.reduce((a, b) => a + b, 0);
+    const p = w.map(x => Math.round(x / s * 100));
+    p[0] += 100 - p.reduce((a, b) => a + b, 0);
+    return p;
+  }
+  const pctSum = () => Math.round(tour.pcts.reduce((a, b) => a + b, 0) * 100) / 100;
+  const pctText = n => (Math.round(n * 100) / 100).toLocaleString('ko-KR');
+
+  // 1,000원 단위(바이인이 100원 단위면 100원)로 맞추고 반올림해서 남거나 모자란 돈은 1등에서 조정
+  function payouts(pool) {
+    const unit = tour.buyIn % 1000 === 0 ? 1000 : tour.buyIn % 100 === 0 ? 100 : 1;
+    const amts = tour.pcts.map(p => Math.round(pool * p / 100 / unit) * unit);
+    if (pctSum() === 100) amts[0] += pool - amts.reduce((a, b) => a + b, 0);
+    return amts;
+  }
+
+  function tourResult(f, amts) {
+    const rows = f.ps.map((p, idx) => {
+      const place = placeOf(f, p);
+      const prize = place <= amts.length ? amts[place - 1] : 0;
+      const paid = entriesOf(p) * tour.buyIn;
+      return { idx, name: nameOf(p), place, entries: entriesOf(p), paid, prize, net: prize - paid };
+    }).sort((a, b) => a.place - b.place);
+    return { rows, transfers: minTransfers(rows) };
+  }
+
+  function renderTourPlayers() {
+    const f = field();
+    const busted = f.out.slice().reverse().map(id => f.ps.find(p => p.id === id));
+    const sitting = state.players.filter(p => entriesOf(p) === 0);
+    const count = p => tour.maxBuy ? `${entriesOf(p)}/${tour.maxBuy}` : entriesOf(p);
+    const stepper = p => `
+        <div class="stepper">
+          <button type="button" class="step minus" data-act="dec" aria-label="바이인 빼기"${entriesOf(p) ? '' : ' disabled'}>−</button>
+          <span class="t-count">${count(p)}</span>
+          <button type="button" class="step plus" data-act="inc" aria-label="바이인 추가"${canRebuy(p) ? '' : ' disabled'}>+</button>
+        </div>`;
+    const main = (p, sub) => `
+        <div class="p-main">
+          <div class="p-label">${esc(nameOf(p))}</div>
+          <div class="p-sub">${sub}</div>
+        </div>`;
+    const paid = p => `${entriesOf(p)}바이인 · ${fmt(entriesOf(p) * tour.buyIn)}원`;
+
+    $('#tPlayers').innerHTML = [
+      ...f.alive.map(p => f.done ? `
+      <li class="player" data-id="${p.id}">${main(p, paid(p))}
+        <span class="place win">🏆 1등</span>
+      </li>` : `
+      <li class="player" data-id="${p.id}">${main(p, paid(p))}${stepper(p)}
+        <button type="button" class="out-btn" data-act="out">탈락</button>
+      </li>`),
+      ...busted.map(p => `
+      <li class="player busted" data-id="${p.id}">${main(p, paid(p))}
+        <span class="place">${placeOf(f, p)}등</span>
+        <button type="button" class="undo" data-act="undo">취소</button>
+      </li>`),
+      ...sitting.map(p => `
+      <li class="player off" data-id="${p.id}">${main(p, '불참')}${stepper(p)}
+      </li>`),
+    ].join('') || '<li class="empty">인원 탭에서 인원을 추가해 주세요.</li>';
+
+    $('#tTotals').textContent = f.ps.length ? `${f.ps.length}명 · ${f.entries}바이인 · 남은 ${f.alive.length}명` : '';
+    renderPrizeDerived();
+  }
+
+  function renderPrizes() {
+    $('#tPlaces').value = tour.places || '';
+    $('#tPrizes').innerHTML = tour.pcts.map((pct, i) => `
+      <div class="prize-row">
+        <span class="rank">${i + 1}등</span>
+        <div class="unit"><input class="pct" data-i="${i}" type="number" inputmode="decimal" min="0" step="any" value="${pct}" aria-label="${i + 1}등 비율"><span>%</span></div>
+        <span class="amt"></span>
+      </div>`).join('');
+    renderPrizeDerived();
+  }
+
+  function renderPrizeDerived() {
+    const f = field();
+    const amts = payouts(f.pool);
+    document.querySelectorAll('#tPrizes .amt').forEach((el, i) => { el.textContent = `${fmt(amts[i])}원`; });
+    $('#tPool').textContent = `총 ${fmt(f.pool)}원`;
+    const sum = pctSum();
+    let badge;
+    if (sum === 100) badge = '<span class="badge ok">✓ 100%</span>';
+    else if (sum < 100) badge = `<span class="badge warn">${pctText(100 - sum)}% 남음</span>`;
+    else badge = `<span class="badge warn">${pctText(sum - 100)}% 넘음</span>`;
+    $('#tPctCheck').innerHTML = `<span>합계 <b>${pctText(sum)}%</b></span>${badge}`;
+    renderTourResults(f, amts);
+  }
+
+  function renderTourResults(f, amts) {
+    const el = $('#tResults');
+    let msg = '';
+    if (f.ps.length < 2) msg = '참가자가 2명 이상 있어야 해요.';
+    else if (!tour.buyIn) msg = '바이인 금액을 입력해 주세요.';
+    else if (pctSum() !== 100) msg = '상금 비율 합계를 100%로 맞춰 주세요.';
+    else if (tour.places > f.ps.length) msg = `상금 받는 등수(${tour.places}등)가 참가자(${f.ps.length}명)보다 많아요.`;
+    else if (!f.done) msg = `아직 진행 중이에요. 탈락한 사람은 참가자 목록에서 탈락을 눌러 주세요. 한 명만 남으면 송금 목록이 나와요. (남은 ${f.alive.length}명)`;
+    if (msg) {
+      el.innerHTML = `<h2>정산 결과</h2><p class="empty">${msg}</p>`;
+      return;
+    }
+    const res = tourResult(f, amts);
+    el.innerHTML = `<h2>정산 결과</h2>` + (res.transfers.length
+      ? `<ul class="txs">${res.transfers.map(t => `
+          <li class="tx">
+            <div class="who"><span>${esc(t.from.name)}</span><span class="arrow">→</span><span>${esc(t.to.name)}</span></div>
+            <strong>${fmt(t.amt)}원</strong>
+          </li>`).join('')}</ul>`
+      : `<p class="empty">주고받을 돈이 없어요.</p>`) + `
+      <h3>개인별 손익</h3>
+      <table class="ledger">
+        <thead><tr><th>이름</th><th>바이인</th><th>상금</th><th>손익</th></tr></thead>
+        <tbody>${res.rows.map(r => `
+          <tr>
+            <td>${r.place}등 ${esc(r.name)}</td>
+            <td>${r.entries}</td>
+            <td>${r.prize ? fmt(r.prize) : '-'}</td>
+            <td class="${r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : ''}">${signed(r.net)}원</td>
+          </tr>`).join('')}</tbody>
+      </table>
+      <button type="button" class="ghost wide" id="tCopy">결과 복사</button>`;
+  }
+
+  function tourText() {
+    const f = field();
+    const res = tourResult(f, payouts(f.pool));
+    const lines = [`[토너먼트 결과] 1바이인 ${fmt(tour.buyIn)}원 · 총 ${f.entries}바이인 · 상금 ${fmt(f.pool)}원`];
+    res.rows.forEach(r => lines.push(`${r.place}등 ${r.name}: ${r.entries}바이인${r.prize ? ` · 상금 ${fmt(r.prize)}원` : ''} → ${signed(r.net)}원`));
+    lines.push('', '[송금]');
+    if (res.transfers.length) res.transfers.forEach(t => lines.push(`${t.from.name} → ${t.to.name} ${fmt(t.amt)}원`));
+    else lines.push('주고받을 돈 없음');
+    return lines.join('\n');
+  }
+
+  function setTourView(v) {
+    tour.view = v;
+    saveTour();
+    document.body.dataset.tview = v;
+    document.querySelectorAll('#tViews button').forEach(b => b.classList.toggle('on', b.dataset.tview === v));
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('#tViews button').forEach(b => b.addEventListener('click', () => setTourView(b.dataset.tview)));
+  $('#tMini').addEventListener('click', () => setTourView('timer'));
+
+  const tourMoney = { tBuyIn: 'buyIn', tStack: 'stack', tMaxBuy: 'maxBuy' };
+  Object.entries(tourMoney).forEach(([id, key]) => {
+    $('#' + id).addEventListener('input', e => {
+      tour[key] = toInt(e.target.value);
+      saveTour();
+      renderTourPlayers();
+    });
+  });
+
+  $('#tPlayers').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn || btn.disabled) return;
+    const p = find(btn.closest('.player').dataset.id);
+    const act = btn.dataset.act;
+    const n = entriesOf(p);
+    if (act === 'inc' && canRebuy(p)) tour.entries[p.id] = n + 1;
+    else if (act === 'dec') tour.entries[p.id] = Math.max(0, n - 1);
+    else if (act === 'out') tour.out = [...tour.out.filter(id => id !== p.id), p.id];
+    else if (act === 'undo') tour.out = tour.out.filter(id => id !== p.id);
+    saveTour();
+    renderTourPlayers();
+    const f = field();
+    if (act === 'out' && f.done) {
+      toast(`🏆 ${nameOf(f.alive[0])} 우승!`);
+      if (tour.status === 'running') toggleTimer();
+    }
+  });
+
+  $('#tPlaces').addEventListener('input', e => {
+    const n = toInt(e.target.value);
+    if (n < 1 || n > 20 || n === tour.places) return;
+    tour.places = n;
+    tour.pcts = payoutPreset(n);
+    saveTour();
+    renderPrizes();
+  });
+  $('#tPlaces').addEventListener('change', e => { e.target.value = tour.places; });
+
+  $('#tPrizes').addEventListener('input', e => {
+    if (!e.target.classList.contains('pct')) return;
+    tour.pcts[Number(e.target.dataset.i)] = toNum(e.target.value);
+    saveTour();
+    renderPrizeDerived();
+  });
+
+  $('#tResults').addEventListener('click', e => {
+    if (e.target.id === 'tCopy') copyText(tourText());
+  });
+
+  $('#tNewGame').addEventListener('click', () => {
+    if (!confirm('참가자 바이인과 탈락 기록을 처음으로 돌릴까요? 타이머도 레벨 1로 돌아가요.')) return;
+    Object.assign(tour, { entries: {}, out: [], level: 0, status: 'idle', endsAt: 0, left: 0, warned: false });
+    saveTour();
+    keepAwake();
+    renderTour();
+    renderTourPlayers();
+  });
+
+  // ---------- 테이블 (GTO · 확률 탭 공용: 인원 · 내 포지션 · 카드) ----------
+
+  const OKEY = 'poker-chip-calc-odds-v1';
+  let table = loadTable() || freshTable();
+
+  function freshTable() {
+    return { n: 6, pos: 'BTN', cards: [null, null, null, null, null, null, null], slot: 0, rank: 12, suit: -1 };
+  }
+  function loadTable() {
+    try {
+      const t = JSON.parse(localStorage.getItem(OKEY));
+      if (t && Array.isArray(t.cards)) return Object.assign(freshTable(), t);
+    } catch (e) {}
+    return null;
+  }
+  function saveTable() {
+    try { localStorage.setItem(OKEY, JSON.stringify(table)); } catch (e) {}
+  }
+
+  // 프리플랍 행동 순서. 헤즈업은 버튼이 스몰 블라인드
+  const POS_NAMES = {
+    2: ['BTN', 'BB'],
+    3: ['BTN', 'SB', 'BB'],
+    4: ['CO', 'BTN', 'SB', 'BB'],
+    5: ['HJ', 'CO', 'BTN', 'SB', 'BB'],
+    6: ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+    7: ['UTG', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+    8: ['UTG', 'UTG+1', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+    9: ['UTG', 'UTG+1', 'MP', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'],
+  };
+  const POS_DESC = {
+    UTG: 'UTG(언더 더 건): 프리플랍에서 가장 먼저 행동해요. 뒤에 남은 사람이 많아서 가장 좁게 열어요.',
+    'UTG+1': 'UTG+1: UTG 바로 다음 자리예요. 아직 뒤에 사람이 많아 좁게 열어요.',
+    MP: 'MP(미들 포지션): 테이블 가운데 자리예요.',
+    LJ: 'LJ(로잭): 하이잭 바로 앞자리예요.',
+    HJ: 'HJ(하이잭): 컷오프 바로 앞자리예요.',
+    CO: 'CO(컷오프): 버튼 바로 앞자리라 꽤 넓게 열어요.',
+    BTN: 'BTN(버튼·딜러): 플랍 이후에 항상 마지막으로 행동해서 가장 넓게 열어요.',
+    SB: 'SB(스몰 블라인드): 빅 블라인드만 남았을 때 열어요. 플랍 이후엔 가장 먼저 행동해서 불리해요.',
+    BB: 'BB(빅 블라인드): 모두 폴드하면 이기니까 먼저 열 일이 없어요. 상대가 열면 콜이나 3벳으로 막아요.',
+    HU: '헤즈업 BTN: 둘이서 할 때는 버튼이 스몰 블라인드를 내고 프리플랍에 먼저 행동해요. 아주 넓게 열어요.',
+  };
+
+  // ----- GTO 오픈 레인지 (100BB, 앞사람이 모두 폴드했을 때 먼저 레이즈) -----
+
+  const GRID = 'AKQJT98765432';
+  const RANGES = {
+    UTG: '66+, A9s+, A5s-A4s, KTs+, QTs+, JTs, AJo+, KQo',
+    UTG1: '55+, A8s+, A5s-A4s, KTs+, QTs+, JTs, T9s, AJo+, KQo',
+    MP: '44+, A2s+, KTs+, QTs+, JTs, T9s, AJo+, KJo+',
+    LJ: '22+, A2s+, K9s+, QTs+, JTs, T9s, 98s, ATo+, KJo+',
+    HJ: '22+, A2s+, K8s+, Q9s+, J9s+, T9s, 98s, 87s, 76s, 65s, ATo+, KJo+, QJo',
+    CO: '22+, A2s+, K5s+, Q8s+, J8s+, T8s+, 97s+, 86s+, 75s+, 65s, 54s, A8o+, KTo+, QTo+, JTo',
+    BTN: '22+, A2s+, K2s+, Q5s+, J7s+, T7s+, 97s+, 86s+, 75s+, 64s+, 54s, 53s, 43s, A2o+, K9o+, Q9o+, J9o+, T9o, 98o',
+    SB: '22+, A2s+, K3s+, Q5s+, J7s+, T7s+, 96s+, 86s+, 75s+, 64s+, 54s, A2o+, K8o+, Q9o+, J9o+, T9o',
+    HU: '22+, A2s+, K2s+, Q2s+, J2s+, T2s+, 92s+, 82s+, 72s+, 62s+, 52s+, 42s+, 32s, A2o+, K2o+, Q2o+, J4o+, T6o+, 96o+, 86o+, 75o+, 65o, 54o',
+  };
+
+  // "K9s+" = K9s~KQs, "66+" = 66~AA, "A5s-A4s" = A5s·A4s
+  function expandRange(text) {
+    const set = new Set();
+    for (const raw of text.split(',')) {
+      const m = raw.trim().match(/^([AKQJT2-9])([AKQJT2-9])([so]?)(\+?)(?:-[AKQJT2-9]([AKQJT2-9])[so]?)?$/);
+      if (!m) continue;
+      const [, a, b, kind, plus, endLo] = m;
+      const ia = GRID.indexOf(a), ib = GRID.indexOf(b);
+      if (a === b) {
+        for (let i = ia; i >= (plus ? 0 : ia); i--) set.add(GRID[i] + GRID[i]);
+      } else {
+        const stop = plus ? ia + 1 : endLo ? GRID.indexOf(endLo) : ib;
+        for (let j = Math.min(ib, stop); j <= Math.max(ib, stop); j++) set.add(a + GRID[j] + kind);
+      }
+    }
+    return set;
+  }
+  const RANGE_SETS = Object.fromEntries(Object.entries(RANGES).map(([k, v]) => [k, expandRange(v)]));
+  const FROM_BTN = ['BTN', 'CO', 'HJ', 'LJ', 'MP', 'UTG1', 'UTG'];
+
+  function rangeKey(n, pos) {
+    if (pos === 'BB') return null;
+    if (pos === 'SB') return 'SB';
+    if (n === 2) return 'HU';
+    const names = POS_NAMES[n];
+    return FROM_BTN[names.indexOf('BTN') - names.indexOf(pos)];
+  }
+  const gridKey = (i, j) => i === j ? GRID[i] + GRID[i] : i < j ? GRID[i] + GRID[j] + 's' : GRID[j] + GRID[i] + 'o';
+  const combosOf = k => k.length === 2 ? 6 : k[2] === 's' ? 4 : 12;
+  const posDesc = (n, pos) => POS_DESC[n === 2 && pos === 'BTN' ? 'HU' : pos];
+
+  let gtoHand = null;
+
+  function renderTable() {
+    const names = POS_NAMES[table.n];
+    if (!names.includes(table.pos)) table.pos = 'BTN';
+    document.querySelectorAll('[data-table="n"]').forEach(el => {
+      el.innerHTML = [2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button type="button" data-n="${n}" class="${n === table.n ? 'on' : ''}">${n}</button>`).join('');
+    });
+    document.querySelectorAll('[data-table="pos"]').forEach(el => {
+      el.innerHTML = names.map(p => `<button type="button" data-pos="${p}" class="${p === table.pos ? 'on' : ''}">${p}</button>`).join('');
+    });
+    document.querySelectorAll('[data-table="desc"]').forEach(el => { el.textContent = posDesc(table.n, table.pos); });
+  }
+
+  function renderGto() {
+    const key = rangeKey(table.n, table.pos);
+    const set = key ? RANGE_SETS[key] : new Set();
+    if (!$('#gGrid').children.length) {
+      let h = '';
+      for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) h += `<button type="button" data-k="${gridKey(i, j)}">${gridKey(i, j)}</button>`;
+      $('#gGrid').innerHTML = h;
+    }
+    $('#gGrid').querySelectorAll('button').forEach(b => {
+      b.classList.toggle('in', set.has(b.dataset.k));
+      b.classList.toggle('sel', b.dataset.k === gtoHand);
+    });
+    const combos = [...set].reduce((s, k) => s + combosOf(k), 0);
+    $('#gStat').textContent = key ? `${table.pos} · ${(combos / 1326 * 100).toFixed(1)}%` : 'BB';
+    $('#gNote').textContent = key
+      ? `앞사람이 모두 폴드하고 내 차례일 때 먼저 레이즈할 핸드예요. 색칠 안 된 핸드는 폴드. 전체 1,326조합 중 ${fmt(combos)}조합이에요.`
+      : 'BB는 모두 폴드하면 이기므로 먼저 오픈하지 않아요. 다른 포지션을 골라 보세요.';
+
+    const el = $('#gHand');
+    if (!gtoHand) {
+      el.innerHTML = `<h2>핸드로 찾기</h2><p class="empty">표에서 핸드를 누르면 포지션마다 오픈하는지 보여줘요.</p>`;
+      return;
+    }
+    const kind = gtoHand.length === 2 ? '포켓 페어' : gtoHand[2] === 's' ? '수티드 (같은 무늬)' : '오프수트 (다른 무늬)';
+    el.innerHTML = `<h2>핸드로 찾기</h2>
+      <div><span class="hand-big">${gtoHand}</span><span class="hint" style="display:inline">${kind} · ${combosOf(gtoHand)}조합</span></div>
+      <div class="verdicts">${POS_NAMES[table.n].map(p => {
+        const k = rangeKey(table.n, p);
+        const v = !k ? '<span class="f">오픈 없음</span>' : RANGE_SETS[k].has(gtoHand) ? '<span class="r">레이즈</span>' : '<span class="f">폴드</span>';
+        return `<div class="${p === table.pos ? 'now' : ''}"><b>${p}</b>${v}</div>`;
+      }).join('')}</div>`;
+  }
+
+  // ----- 확률 -----
+  // 카드 = 숫자*4 + 무늬 (숫자 0=2 … 12=A, 무늬 0♠ 1♥ 2♦ 3♣)
+
+  const RANK_CH = '23456789TJQKA';
+  const SUIT_CH = '♠♥♦♣';
+  const rankText = r => r === 8 ? '10' : RANK_CH[r];
+  const cardHtml = c => `<span class="s${c & 3}">${rankText(c >> 2)}<small>${SUIT_CH[c & 3]}</small></span>`;
+  const handKeyOf = (a, b) => {
+    const [hi, lo] = (a >> 2) >= (b >> 2) ? [a, b] : [b, a];
+    const k = RANK_CH[hi >> 2] + RANK_CH[lo >> 2];
+    return hi >> 2 === lo >> 2 ? k : k + ((hi & 3) === (lo & 3) ? 's' : 'o');
+  };
+  const pct = x => `${(x * 100).toFixed(1)}%`;
+  function comb(n, k) {
+    if (k < 0 || k > n) return 0;
+    let r = 1;
+    for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+    return r;
+  }
+
+  // 7장(5~7장) 중 가장 좋은 5장 족보를 비교 가능한 숫자로. 클수록 강함
+  const CAT = 268435456; // 2^28
+  const HAND_NAMES = ['하이카드', '원페어', '투페어', '트리플', '스트레이트', '플러시', '풀하우스', '포카드', '스트레이트 플러시'];
+  function topBits(mask, n) {
+    let out = 0;
+    for (let r = 12; r >= 0 && n; r--) if (mask & (1 << r)) { out |= 1 << r; n--; }
+    return out;
+  }
+  function straightHigh(m) {
+    for (let t = 12; t >= 4; t--) if (((m >> (t - 4)) & 31) === 31) return t;
+    return (m & 15) === 15 && (m & 4096) ? 3 : -1; // A-2-3-4-5
+  }
+  function evalHand(cards) {
+    const cnt = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const suits = [0, 0, 0, 0];
+    const suitN = [0, 0, 0, 0];
+    let all = 0;
+    for (const c of cards) {
+      const r = c >> 2, s = c & 3;
+      cnt[r]++;
+      suits[s] |= 1 << r;
+      suitN[s]++;
+      all |= 1 << r;
+    }
+    let flush = -1;
+    for (let s = 0; s < 4; s++) if (suitN[s] >= 5) flush = s;
+    if (flush >= 0) {
+      const sf = straightHigh(suits[flush]);
+      if (sf >= 0) return 8 * CAT + sf * 16777216;
+    }
+    let quad = -1, trip = -1, trip2 = -1, p1 = -1, p2 = -1;
+    for (let r = 12; r >= 0; r--) {
+      if (cnt[r] === 4) quad = r;
+      else if (cnt[r] === 3) { if (trip < 0) trip = r; else if (trip2 < 0) trip2 = r; }
+      else if (cnt[r] === 2) { if (p1 < 0) p1 = r; else if (p2 < 0) p2 = r; }
+    }
+    if (quad >= 0) return 7 * CAT + quad * 16777216 + topBits(all & ~(1 << quad), 1);
+    if (trip >= 0 && (trip2 >= 0 || p1 >= 0)) return 6 * CAT + trip * 16777216 + Math.max(trip2, p1) * 1048576;
+    if (flush >= 0) return 5 * CAT + topBits(suits[flush], 5);
+    const st = straightHigh(all);
+    if (st >= 0) return 4 * CAT + st * 16777216;
+    if (trip >= 0) return 3 * CAT + trip * 16777216 + topBits(all & ~(1 << trip), 2);
+    if (p2 >= 0) return 2 * CAT + p1 * 16777216 + p2 * 1048576 + topBits(all & ~(1 << p1) & ~(1 << p2), 1);
+    if (p1 >= 0) return CAT + p1 * 16777216 + topBits(all & ~(1 << p1), 3);
+    return topBits(all, 5);
+  }
+
+  const holeCards = () => table.cards.slice(0, 2);
+  const boardCards = () => table.cards.slice(2).filter(c => c !== null);
+  const knownCards = () => table.cards.filter(c => c !== null);
+  function stageText(n) {
+    return ['프리플랍', '플랍 입력 중', '플랍 입력 중', '플랍', '턴', '리버'][n];
+  }
+
+  function renderCards() {
+    const slot = i => {
+      const c = table.cards[i];
+      const cls = 'slot' + (c !== null ? ' filled' : '') + (i === table.slot ? ' active' : '') + (i === 5 || i === 6 ? ' gap' : '');
+      return `<button type="button" class="${cls}" data-slot="${i}" aria-label="${i < 2 ? '내 카드' : '보드'} ${i < 2 ? i + 1 : i - 1}">${c !== null ? cardHtml(c) : ''}</button>`;
+    };
+    $('#oHole').innerHTML = [0, 1].map(slot).join('');
+    $('#oBoard').innerHTML = [2, 3, 4, 5, 6].map(slot).join('');
+    if (!$('#oDeck').children.length) {
+      let h = '';
+      for (let s = 0; s < 4; s++) for (let r = 12; r >= 0; r--) {
+        const c = r * 4 + s;
+        h += `<button type="button" data-c="${c}" class="s${s}">${rankText(r)}<small>${SUIT_CH[s]}</small></button>`;
+      }
+      $('#oDeck').innerHTML = h;
+    }
+    const used = new Set(knownCards());
+    $('#oDeck').querySelectorAll('button').forEach(b => { b.disabled = used.has(Number(b.dataset.c)); });
+    $('#oStage').textContent = stageText(boardCards().length);
+  }
+
+  function renderTargetPickers() {
+    $('#oRank').innerHTML = [-1, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+      .map(r => `<button type="button" data-r="${r}" class="${r === table.rank ? 'on' : ''}">${r < 0 ? '전체' : rankText(r)}</button>`).join('');
+    $('#oSuit').innerHTML = [-1, 0, 1, 2, 3]
+      .map(s => `<button type="button" data-s="${s}" class="${s === table.suit ? 'on' : ''}">${s < 0 ? '전체' : `<span class="s${s}">${SUIT_CH[s]}</span>`}</button>`).join('');
+  }
+
+  function renderTarget() {
+    const el = $('#oTarget');
+    const board = boardCards().length;
+    const left = 5 - board;
+    if (table.rank < 0 && table.suit < 0) {
+      el.innerHTML = '<p class="hint">숫자나 무늬 중 하나는 골라 주세요.</p>';
+      return;
+    }
+    const name = (table.rank >= 0 ? rankText(table.rank) : '') + (table.suit >= 0 ? SUIT_CH[table.suit] : '') + (table.rank >= 0 && table.suit < 0 ? '(무늬 상관없이)' : '');
+    if (!left) {
+      el.innerHTML = `<p class="hint">보드 5장이 다 깔려서 더 나올 카드가 없어요.</p>`;
+      return;
+    }
+    const used = new Set(knownCards());
+    const unseen = 52 - used.size;
+    let outs = 0;
+    for (let c = 0; c < 52; c++) {
+      if (used.has(c)) continue;
+      if (table.rank >= 0 && c >> 2 !== table.rank) continue;
+      if (table.suit >= 0 && (c & 3) !== table.suit) continue;
+      outs++;
+    }
+    const atLeast = k => 1 - comb(unseen - outs, k) / comb(unseen, k);
+    const next = board < 3 ? 3 - board : 1;
+    const nextName = board < 3 ? `플랍에 (${next}장)` : board === 3 ? '턴에 (1장)' : '리버에 (1장)';
+    let rows = `<div class="prob"><span>${nextName}</span><b>${pct(atLeast(next))}</b></div>`;
+    if (left > next) rows += `<div class="prob"><span>리버까지 (${left}장 중 한 장 이상)</span><b>${pct(atLeast(left))}</b></div>`;
+    el.innerHTML = `<p class="hint">${name}: 아직 안 보인 ${unseen}장 중 <b>${outs}장</b> 남아 있어요.</p><div class="probs">${rows}</div>`;
+  }
+
+  // 승률은 상대 패를 모르니 무작위로 나눠 주는 시뮬레이션, 족보 완성 확률은 경우의 수가 적으면 전부 세고 많으면 시뮬레이션
+  let simToken = 0;
+  function runOdds() {
+    const token = ++simToken;
+    const hole = holeCards();
+    const board = boardCards();
+    const eqEl = $('#oEquity'), mhEl = $('#oMade');
+    const opp = table.n - 1;
+    if (hole.includes(null)) {
+      eqEl.innerHTML = `<h2>승률 <small>${table.n}명</small></h2><p class="empty">내 카드 2장을 넣으면 승률이 나와요.</p>`;
+      mhEl.innerHTML = `<h2>리버까지 족보 확률</h2><p class="empty">내 카드 2장을 넣으면 나와요.</p>`;
+      renderGtoTip();
+      return;
+    }
+    renderGtoTip();
+    const known = new Set([...hole, ...board]);
+    const deck = [];
+    for (let c = 0; c < 52; c++) if (!known.has(c)) deck.push(c);
+    const need = 5 - board.length;
+    const total = Math.min(20000, Math.max(4000, Math.round(100000 / table.n)));
+    let done = 0, win = 0, tie = 0;
+    const simCats = new Array(9).fill(0);
+    const exact = comb(deck.length, need) <= 20000 ? exactMade(hole, board, deck, need) : null;
+    const runout = new Array(5);
+
+    function step() {
+      if (token !== simToken) return;
+      const end = Math.min(total, done + 2000);
+      const pick = need + opp * 2;
+      for (; done < end; done++) {
+        for (let i = 0; i < pick; i++) {
+          const j = i + Math.floor(Math.random() * (deck.length - i));
+          const t = deck[i]; deck[i] = deck[j]; deck[j] = t;
+        }
+        for (let i = 0; i < 5; i++) runout[i] = i < board.length ? board[i] : deck[i - board.length];
+        const mine = evalHand([hole[0], hole[1], ...runout]);
+        simCats[Math.floor(mine / CAT)]++;
+        let result = 1; // 1 이김, 0 비김, -1 짐
+        for (let o = 0; o < opp && result >= 0; o++) {
+          const s = evalHand([deck[need + o * 2], deck[need + o * 2 + 1], ...runout]);
+          if (s > mine) result = -1;
+          else if (s === mine) result = 0;
+        }
+        if (result > 0) win++;
+        else if (result === 0) tie++;
+      }
+      eqEl.innerHTML = `<h2>승률 <small>${table.n}명 · 상대 ${opp}명</small></h2>
+        <div class="eq">
+          <div class="win"><small>이길 확률</small><b>${pct(win / done)}</b></div>
+          <div><small>비길 확률</small><b>${pct(tie / done)}</b></div>
+          <div class="lose"><small>질 확률</small><b>${pct((done - win - tie) / done)}</b></div>
+        </div>
+        <p class="hint">상대 패와 남은 보드를 무작위로 ${fmt(done)}번 돌려 본 결과예요${done < total ? ' (계산 중…)' : ''}. 모두 끝까지 간다고 가정해요.</p>`;
+      renderMade(exact || simCats, exact ? null : done, board.length);
+      if (done < total) setTimeout(step, 0);
+    }
+    step();
+  }
+
+  function exactMade(hole, board, deck, need) {
+    const cats = new Array(9).fill(0);
+    const cur = [hole[0], hole[1], ...board];
+    (function rec(start, k) {
+      if (!k) { cats[Math.floor(evalHand(cur) / CAT)]++; return; }
+      for (let i = start; i <= deck.length - k; i++) {
+        cur.push(deck[i]);
+        rec(i + 1, k - 1);
+        cur.pop();
+      }
+    })(0, need);
+    return cats;
+  }
+
+  function renderMade(cats, simDone, boardN) {
+    const total = cats.reduce((a, b) => a + b, 0);
+    const rows = HAND_NAMES.map((name, i) => ({ name, p: cats[i] / total })).reverse();
+    let atLeast = 0;
+    $('#oMade').innerHTML = `<h2>${boardN === 5 ? '내 족보' : '리버까지 족보 확률'}</h2>
+      ${rows.map(r => {
+        atLeast += r.p;
+        return `<div class="mh"><span>${r.name}</span><i style="--w:${(r.p * 100).toFixed(1)}%"></i><b>${pct(r.p)}</b></div>`;
+      }).join('')}
+      <p class="hint">${boardN === 5 ? '보드가 다 깔려서 확정된 족보예요.' : simDone ? `남은 보드를 무작위로 ${fmt(simDone)}번 뽑아 본 결과예요.` : '남은 보드의 모든 경우를 다 세어 본 정확한 값이에요.'} 최종 족보가 딱 그 등급이 될 확률이에요.</p>`;
+  }
+
+  function renderGtoTip() {
+    const hole = holeCards();
+    const tip = $('#oGtoTip');
+    if (hole.includes(null) || boardCards().length) { tip.hidden = true; return; }
+    const hand = handKeyOf(hole[0], hole[1]);
+    const key = rangeKey(table.n, table.pos);
+    tip.hidden = false;
+    tip.innerHTML = key
+      ? `프리플랍 GTO (${table.n}명 · ${table.pos}): <b>${hand}</b>는 앞사람이 모두 폴드했으면 <b>${RANGE_SETS[key].has(hand) ? '레이즈' : '폴드'}</b>`
+      : `프리플랍 GTO: BB는 먼저 오픈하지 않아요. <b>${hand}</b>로 상대 오픈에 대응해요.`;
+  }
+
+  function renderOdds() {
+    renderCards();
+    renderTargetPickers();
+    renderTarget();
+    if (state.mode === 'odds') runOdds();
+  }
+
+  // 인원 · 포지션 (GTO · 확률 공용)
+  document.addEventListener('click', e => {
+    const n = e.target.closest('[data-table="n"] [data-n]');
+    const pos = e.target.closest('[data-table="pos"] [data-pos]');
+    if (!n && !pos) return;
+    if (n) table.n = Number(n.dataset.n);
+    if (pos) table.pos = pos.dataset.pos;
+    saveTable();
+    renderTable();
+    renderGto();
+    if (state.mode === 'odds') { renderTarget(); runOdds(); }
+  });
+
+  $('#gGrid').addEventListener('click', e => {
+    const b = e.target.closest('[data-k]');
+    if (!b) return;
+    gtoHand = gtoHand === b.dataset.k ? null : b.dataset.k;
+    renderGto();
+  });
+
+  $('#oSlots').addEventListener('click', e => {
+    const b = e.target.closest('[data-slot]');
+    if (!b) return;
+    const i = Number(b.dataset.slot);
+    if (table.cards[i] !== null) table.cards[i] = null;
+    table.slot = i;
+    saveTable();
+    renderOdds();
+  });
+
+  $('#oDeck').addEventListener('click', e => {
+    const b = e.target.closest('[data-c]');
+    if (!b || b.disabled) return;
+    table.cards[table.slot] = Number(b.dataset.c);
+    // 다음 빈칸으로 (내 카드 → 보드 순서)
+    const next = table.cards.findIndex((c, i) => c === null && i > table.slot);
+    const first = table.cards.indexOf(null);
+    table.slot = next >= 0 ? next : first >= 0 ? first : table.slot;
+    saveTable();
+    renderOdds();
+  });
+
+  $('#oClear').addEventListener('click', () => {
+    table.cards = freshTable().cards;
+    table.slot = 0;
+    saveTable();
+    renderOdds();
+  });
+  $('#oClearBoard').addEventListener('click', () => {
+    for (let i = 2; i < 7; i++) table.cards[i] = null;
+    table.slot = holeCards().includes(null) ? holeCards().indexOf(null) : 2;
+    saveTable();
+    renderOdds();
+  });
+
+  $('#oRank').addEventListener('click', e => {
+    const b = e.target.closest('[data-r]');
+    if (!b) return;
+    table.rank = Number(b.dataset.r);
+    saveTable();
+    renderTargetPickers();
+    renderTarget();
+  });
+  $('#oSuit').addEventListener('click', e => {
+    const b = e.target.closest('[data-s]');
+    if (!b) return;
+    table.suit = Number(b.dataset.s);
+    saveTable();
+    renderTargetPickers();
+    renderTarget();
   });
 
   // 캡처 단계에서 받아서 시작·테스트 버튼 처리보다 먼저 소리를 깨움
